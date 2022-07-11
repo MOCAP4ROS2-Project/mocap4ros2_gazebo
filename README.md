@@ -1,5 +1,3 @@
-[![GitHub Action
-Status](https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/workflows/main/badge.svg)](https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo)
 
 # gazebo_mocap_plugin
 
