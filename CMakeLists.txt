@@ -27,6 +27,7 @@ find_package(gazebo_msgs REQUIRED)
 find_package(gazebo_ros REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(mocap_msgs REQUIRED)
+find_package(mocap_control REQUIRED)
 find_package(rclcpp REQUIRED)
 
 link_directories(${gazebo_dev_LIBRARY_DIRS})
@@ -53,6 +54,7 @@ ament_target_dependencies(gazebo_ros_mocap
   "gazebo_ros"
   "rclcpp"
   "mocap_msgs"
+  "mocap_control"
   "geometry_msgs"
 )
 ament_export_libraries(gazebo_ros_mocap)
@@ -64,6 +66,7 @@ ament_export_dependencies(gazebo_dev)
 ament_export_dependencies(gazebo_msgs)
 ament_export_dependencies(gazebo_ros)
 ament_export_dependencies(mocap_msgs)
+ament_export_dependencies(mocap_control)
 ament_export_dependencies(geometry_msgs)
 
 if(BUILD_TESTING)
