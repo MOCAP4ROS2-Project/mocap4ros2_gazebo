@@ -34,4 +34,5 @@ jobs:
                 ]
               }
             }
+          vcs-repo-file-url: https://raw.githubusercontent.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/main/dependency_repos.repos
 
