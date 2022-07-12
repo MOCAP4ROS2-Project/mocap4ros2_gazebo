@@ -70,7 +70,7 @@ And check that topics `/markers` and `/rigid_bodies` are availables
 
 Example of full integration with `mocap_control`.
 
-[![](https://img.youtube.com/vi/ex3eQ328NDU/0.jpg)](https://www.youtube.com/watch?v=ex3eQ328NDU&feature=youtu.be "Click to play on You Tube")
+[![](https://img.youtube.com/vi/i9U_T0Ti6Oo/0.jpg)](https://www.youtube.com/watch?v=i9U_T0Ti6Oo&feature=youtu.be "Click to play on You Tube")
 
 
 ## Markers and rigid body
