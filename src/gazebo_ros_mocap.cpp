@@ -166,16 +166,16 @@ void GazeboRosMocap::OnUpdate()
     m1.translation.z = pos.Z() + 0.05;
 
     mocap_msgs::msg::Marker m2;
-    m1.index = 2;
-    m1.translation.x = pos.X() + 0.02;
-    m1.translation.y = pos.Y();
-    m1.translation.z = pos.Z() + 0.03;
+    m2.index = 2;
+    m2.translation.x = pos.X() + 0.02;
+    m2.translation.y = pos.Y();
+    m2.translation.z = pos.Z() + 0.03;
 
     mocap_msgs::msg::Marker m3;
-    m1.index = 3;
-    m1.translation.x = pos.X();
-    m1.translation.y = pos.Y() + 0.015;
-    m1.translation.z = pos.Z() + 0.03;
+    m3.index = 3;
+    m3.translation.x = pos.X();
+    m3.translation.y = pos.Y() + 0.015;
+    m3.translation.z = pos.Z() + 0.03;
 
     mocap_msgs::msg::Markers ms;
     ms.header.stamp = impl_->now();
