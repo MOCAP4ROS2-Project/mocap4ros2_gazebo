@@ -67,6 +67,12 @@ gzclient
 
 And check that topics `/markers` and `/rigid_bodies` are availables
 
+
+Example of full integration with `mocap_control`.
+
+[![](https://img.youtube.com/vi/i9U_T0Ti6Oo/0.jpg)](https://www.youtube.com/watch?v=i9U_T0Ti6Oo&feature=youtu.be "Click to play on You Tube")
+
+
 ## Markers and rigid body
 <img src="https://user-images.githubusercontent.com/3810011/178335627-080f8d5a-7b6f-40d2-8038-caf73e7cf8d9.png" width="500">
 <img src="https://user-images.githubusercontent.com/3810011/178335622-02e126f7-ec96-41a0-9936-38af589c5a2d.png" width="500">
