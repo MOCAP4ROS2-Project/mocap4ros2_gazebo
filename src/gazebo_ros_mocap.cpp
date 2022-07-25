@@ -160,19 +160,22 @@ void GazeboRosMocap::OnUpdate()
 
   if (impl_->mocap_markers_pub_->get_subscription_count() > 0) {
     mocap_msgs::msg::Marker m1;
-    m1.index = 1;
+    m1.id_type = mocap_msgs::msg::Marker::USE_INDEX;
+    m1.marker_index = 1;
     m1.translation.x = pos.X();
     m1.translation.y = pos.Y();
     m1.translation.z = pos.Z() + 0.05;
 
     mocap_msgs::msg::Marker m2;
-    m2.index = 2;
+    m2.id_type = mocap_msgs::msg::Marker::USE_INDEX;
+    m2.marker_index = 2;
     m2.translation.x = pos.X() + 0.02;
     m2.translation.y = pos.Y();
     m2.translation.z = pos.Z() + 0.03;
 
     mocap_msgs::msg::Marker m3;
-    m3.index = 3;
+    m3.id_type = mocap_msgs::msg::Marker::USE_INDEX;
+    m3.marker_index = 3;
     m3.translation.x = pos.X();
     m3.translation.y = pos.Y() + 0.015;
     m3.translation.z = pos.Z() + 0.03;
@@ -188,7 +191,7 @@ void GazeboRosMocap::OnUpdate()
 
   if (impl_->mocap_rigid_body_pub_->get_subscription_count() > 0) {
     mocap_msgs::msg::RigidBody rb;
-    rb.index = 1;
+    rb.rigid_body_name = "rigid_body_1";
     rb.header.stamp = impl_->now();
     rb.header.frame_id = "mocap";
     rb.frame_number = impl_->frame_number_++;
