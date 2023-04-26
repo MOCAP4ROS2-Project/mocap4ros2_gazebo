@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Author: Jose Miguel Guerrero Hernandez <josemiguel.guerrero@urjc.es>
+
 
 #include <memory>
 #include <string>
@@ -22,7 +24,7 @@
 #include <gazebo_ros/node.hpp>
 
 #include "mocap_msgs/msg/markers.hpp"
-#include "mocap_msgs/msg/rigid_body.hpp"
+#include "mocap_msgs/msg/rigid_bodies.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
 
 #include "rclcpp/rclcpp.hpp"
@@ -57,7 +59,8 @@ public:
 
   /// ROS communication.
   rclcpp_lifecycle::LifecyclePublisher<mocap_msgs::msg::Markers>::SharedPtr mocap_markers_pub_;
-  rclcpp_lifecycle::LifecyclePublisher<mocap_msgs::msg::RigidBody>::SharedPtr mocap_rigid_body_pub_;
+  rclcpp_lifecycle::LifecyclePublisher<mocap_msgs::msg::RigidBodies>::SharedPtr
+    mocap_rigid_body_pub_;
   int frame_number_{0};
 };
 
@@ -73,7 +76,7 @@ GazeboRosMocapPrivate::on_configure(const rclcpp_lifecycle::State & state)
 {
   mocap_markers_pub_ = create_publisher<mocap_msgs::msg::Markers>(
     "markers", rclcpp::QoS(1000));
-  mocap_rigid_body_pub_ = create_publisher<mocap_msgs::msg::RigidBody>(
+  mocap_rigid_body_pub_ = create_publisher<mocap_msgs::msg::RigidBodies>(
     "rigid_bodies", rclcpp::QoS(1000));
 
   return ControlledLifecycleNode::on_configure(state);
@@ -182,7 +185,7 @@ void GazeboRosMocap::OnUpdate()
 
     mocap_msgs::msg::Markers ms;
     ms.header.stamp = impl_->now();
-    ms.header.frame_id = "mocap";
+    ms.header.frame_id = "map";
     ms.frame_number = impl_->frame_number_++;
     ms.markers = {m1, m2, m3};
 
@@ -190,20 +193,46 @@ void GazeboRosMocap::OnUpdate()
   }
 
   if (impl_->mocap_rigid_body_pub_->get_subscription_count() > 0) {
-    mocap_msgs::msg::RigidBody rb;
-    rb.rigid_body_name = "rigid_body_1";
-    rb.header.stamp = impl_->now();
-    rb.header.frame_id = "mocap";
-    rb.frame_number = impl_->frame_number_++;
-    rb.pose.position.x = pos.X();
-    rb.pose.position.y = pos.Y();
-    rb.pose.position.z = pos.Z();
-    rb.pose.orientation.x = rot.X();
-    rb.pose.orientation.y = rot.Y();
-    rb.pose.orientation.z = rot.Z();
-    rb.pose.orientation.w = rot.W();
+    mocap_msgs::msg::RigidBody rb1;
+    rb1.rigid_body_name = "rigid_body_1";
+    rb1.pose.position.x = pos.X();
+    rb1.pose.position.y = pos.Y();
+    rb1.pose.position.z = pos.Z();
+    rb1.pose.orientation.x = rot.X();
+    rb1.pose.orientation.y = rot.Y();
+    rb1.pose.orientation.z = rot.Z();
+    rb1.pose.orientation.w = rot.W();
 
-    impl_->mocap_rigid_body_pub_->publish(rb);
+    mocap_msgs::msg::Marker m1;
+    m1.id_type = mocap_msgs::msg::Marker::USE_INDEX;
+    m1.marker_index = 1;
+    m1.translation.x = pos.X();
+    m1.translation.y = pos.Y();
+    m1.translation.z = pos.Z() + 0.05;
+
+    mocap_msgs::msg::Marker m2;
+    m2.id_type = mocap_msgs::msg::Marker::USE_INDEX;
+    m2.marker_index = 2;
+    m2.translation.x = pos.X() + 0.02;
+    m2.translation.y = pos.Y();
+    m2.translation.z = pos.Z() + 0.03;
+
+    mocap_msgs::msg::Marker m3;
+    m3.id_type = mocap_msgs::msg::Marker::USE_INDEX;
+    m3.marker_index = 3;
+    m3.translation.x = pos.X();
+    m3.translation.y = pos.Y() + 0.015;
+    m3.translation.z = pos.Z() + 0.03;
+
+    rb1.markers = {m1, m2, m3};
+
+    mocap_msgs::msg::RigidBodies rbs;
+    rbs.header.stamp = impl_->now();
+    rbs.header.frame_id = "map";
+    rbs.frame_number = impl_->frame_number_++;
+    rbs.rigidbodies = {rb1};
+
+    impl_->mocap_rigid_body_pub_->publish(rbs);
   }
 }
 
