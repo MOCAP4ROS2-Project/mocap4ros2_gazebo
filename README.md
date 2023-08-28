@@ -8,47 +8,34 @@ This package provides you with a gazebo plugin that allows you to simulate the u
 Add in your robot model the following, as done in [This sample model](https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/blob/main/models/waffle.model):
 
 ```
-      <link name="base_mocap">
-        <pose>-0.052 0 0.141 0 0 0</pose>
+    <link name="base_mocap">
+        <pose>"0 0 0.577 0 0 0</pose>
         <inertial>
-          <pose>-0.052 0 0.141 0 0 0</pose>
-          <inertia>
-            <ixx>0.001</ixx>
-            <ixy>0.000</ixy>
-            <ixz>0.000</ixz>
-            <iyy>0.001</iyy>
-            <iyz>0.000</iyz>
-            <izz>0.001</izz>
-          </inertia>
-          <mass>0.125</mass>
+          <mass value="0.125"/>
+          <origin xyz="0 0 0.577"/>
+          <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
         </inertial>
 
         <collision name="mocap_sensor_collision">
-          <pose>-0.052 0 0.160 0 0 0</pose>
+          <pose>0 0 0.577 0 0 0</pose>
           <geometry>
-            <cylinder>
-              <radius>0.0508</radius>
-              <length>0.055</length>
-            </cylinder>
+            <cylinder length="0.055" radius="0.0508"/>
           </geometry>
         </collision>
 
         <visual name="mocap_sensor_visual">
-          <pose>-0.064 0 0.141 0 0 0</pose>
+          <origin rpy="0 0 0" xyz=" 0 0 0"/>
           <geometry>
-            <mesh>
-              <uri>model://gazebo_mocap_plugin/meshes/rigid_body.dae</uri>
-              <scale>0.001 0.001 0.001</scale>
-            </mesh>
+            <mesh filename="package://gazebo_mocap_plugin/meshes/rigid_body.dae" scale="0.001 0.001 0.001"/>
           </geometry>
         </visual>
       </link>
-      
-      ...
-
-      <plugin name="gazebo_ros_mocap" filename="libgazebo_ros_mocap.so">
-        <link_name>base_mocap</link_name>
-      </plugin>
+    <gazebo>
+    <plugin name="gazebo_ros_mocap" filename="libgazebo_ros_mocap.so">
+      <model_name>robot</model_name>
+      <link_name>base_footprint</link_name>
+    </plugin>
+    </gazebo>
 ```
 
 ## Run the sample
