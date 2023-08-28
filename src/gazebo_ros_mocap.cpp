@@ -126,6 +126,34 @@ GazeboRosMocap::~GazeboRosMocap()
   impl_->update_connection_.reset();
 }
 
+physics::LinkPtr find_link(gazebo::physics::Link_V & links, const std::string & name)
+{
+  if (links.empty()) {
+    return nullptr;
+  }
+
+  for (const auto & link : links) {
+    std::cerr << "Link: " << link->GetName() << std::endl;
+    if (link->GetName() == name) {
+      return link;
+    } else {
+      auto child_links = link->GetChildJointsLinks();
+      std::cerr << "And has " << child_links.size() << "childs:";
+      for (const auto & child_link : child_links) {
+        std::cerr << " " << child_link->GetName();
+      }
+      std::cerr << std::endl;
+
+      auto found_link = find_link(child_links, name);
+      if (found_link != nullptr) {
+        return found_link;
+      }
+    }
+  }
+
+  return nullptr;
+}
+
 void GazeboRosMocap::Load(physics::ModelPtr _parent, sdf::ElementPtr sdf)
 {
   impl_->update_connection_ = gazebo::event::Events::ConnectWorldUpdateBegin(
@@ -142,10 +170,21 @@ void GazeboRosMocap::Load(physics::ModelPtr _parent, sdf::ElementPtr sdf)
     impl_->link_name_ = sdf->GetElement("link_name")->Get<std::string>();
   }
   impl_->world_ = _parent->GetWorld();
-  impl_->link_ = boost::dynamic_pointer_cast<physics::Link>(
-    impl_->world_->EntityByName(impl_->link_name_));
 
-  RCLCPP_INFO(logger, "Plugin MOCAP loaded for [%s] body", impl_->link_name_.c_str());
+  for (const auto & model : impl_->world_->Models()) {
+    auto links = model->GetLinks();
+    impl_->link_ = find_link(links, impl_->link_name_);
+
+    if (impl_->link_ != nullptr) {
+      break;
+    }
+  }
+
+  if (impl_->link_ != nullptr) {
+    RCLCPP_INFO(logger, "Plugin MOCAP loaded for [%s] body", impl_->link_name_.c_str());
+  } else {
+    RCLCPP_ERROR(logger, "No link [%s] found for Plugin MOCAP", impl_->link_name_.c_str());
+  }
 }
 
 void GazeboRosMocap::OnUpdate()
