@@ -1,5 +1,5 @@
 
-# gazebo_mocap_plugin
+# gazebo_mocap4r2_plugin
 
 This package provides you with a gazebo plugin that allows you to simulate the use of Motion Capture Markers on your simulated robot.
 
@@ -26,7 +26,7 @@ Add in your robot model the following, as done in [This sample model](https://gi
         <visual name="mocap_sensor_visual">
           <origin rpy="0 0 0" xyz=" 0 0 0"/>
           <geometry>
-            <mesh filename="package://gazebo_mocap_plugin/meshes/rigid_body.dae" scale="0.001 0.001 0.001"/>
+            <mesh filename="package://gazebo_mocap4r2_plugin/meshes/rigid_body.dae" scale="0.001 0.001 0.001"/>
           </geometry>
         </visual>
       </link>
@@ -43,7 +43,7 @@ Add in your robot model the following, as done in [This sample model](https://gi
 To see it in action, just type:
 
 ```
-ros2 launch gazebo_mocap_plugin tb3_simulation_launch.py
+ros2 launch gazebo_mocap4r2_plugin tb3_simulation_launch.py
 ```
 
 Open gzclient in other terminal:

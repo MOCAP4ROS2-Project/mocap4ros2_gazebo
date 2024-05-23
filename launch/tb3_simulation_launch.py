@@ -29,7 +29,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     # Get the launch directory
     bringup_dir = get_package_share_directory('nav2_bringup')
-    mocap_dir = get_package_share_directory('gazebo_mocap_plugin')
+    mocap_dir = get_package_share_directory('gazebo_mocap4r2_plugin')
     launch_dir = os.path.join(bringup_dir, 'launch')
 
     # Create the launch configuration variables

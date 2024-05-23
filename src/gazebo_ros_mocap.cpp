@@ -23,12 +23,12 @@
 #include <gazebo_plugins/gazebo_ros_mocap.hpp>
 #include <gazebo_ros/node.hpp>
 
-#include "mocap_msgs/msg/markers.hpp"
-#include "mocap_msgs/msg/rigid_bodies.hpp"
+#include "mocap4r2_msgs/msg/markers.hpp"
+#include "mocap4r2_msgs/msg/rigid_bodies.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
 
 #include "rclcpp/rclcpp.hpp"
-#include "mocap_control/ControlledLifecycleNode.hpp"
+#include "mocap4r2_control/ControlledLifecycleNode.hpp"
 
 namespace gazebo
 {
@@ -39,7 +39,7 @@ using CallbackReturnT =
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
 /// Class to hold private data members (PIMPL pattern)
-class GazeboRosMocapPrivate : public mocap_control::ControlledLifecycleNode
+class GazeboRosMocapPrivate : public mocap4r2_control::ControlledLifecycleNode
 {
 public:
   GazeboRosMocapPrivate();
@@ -48,8 +48,8 @@ public:
   CallbackReturnT on_activate(const rclcpp_lifecycle::State & state) override;
   CallbackReturnT on_deactivate(const rclcpp_lifecycle::State & state) override;
 
-  void control_start(const mocap_control_msgs::msg::Control::SharedPtr msg) override;
-  void control_stop(const mocap_control_msgs::msg::Control::SharedPtr msg) override;
+  void control_start(const mocap4r2_control_msgs::msg::Control::SharedPtr msg) override;
+  void control_stop(const mocap4r2_control_msgs::msg::Control::SharedPtr msg) override;
 
   /// Connection to world update event. Callback is called while this is alive.
   gazebo::event::ConnectionPtr update_connection_;
@@ -58,8 +58,8 @@ public:
   std::string link_name_;
 
   /// ROS communication.
-  rclcpp_lifecycle::LifecyclePublisher<mocap_msgs::msg::Markers>::SharedPtr mocap_markers_pub_;
-  rclcpp_lifecycle::LifecyclePublisher<mocap_msgs::msg::RigidBodies>::SharedPtr
+  rclcpp_lifecycle::LifecyclePublisher<mocap4r2_msgs::msg::Markers>::SharedPtr mocap_markers_pub_;
+  rclcpp_lifecycle::LifecyclePublisher<mocap4r2_msgs::msg::RigidBodies>::SharedPtr
     mocap_rigid_body_pub_;
   int frame_number_{0};
 };
@@ -74,9 +74,9 @@ GazeboRosMocapPrivate::GazeboRosMocapPrivate()
 CallbackReturnT
 GazeboRosMocapPrivate::on_configure(const rclcpp_lifecycle::State & state)
 {
-  mocap_markers_pub_ = create_publisher<mocap_msgs::msg::Markers>(
+  mocap_markers_pub_ = create_publisher<mocap4r2_msgs::msg::Markers>(
     "markers", rclcpp::QoS(1000));
-  mocap_rigid_body_pub_ = create_publisher<mocap_msgs::msg::RigidBodies>(
+  mocap_rigid_body_pub_ = create_publisher<mocap4r2_msgs::msg::RigidBodies>(
     "rigid_bodies", rclcpp::QoS(1000));
 
   return ControlledLifecycleNode::on_configure(state);
@@ -105,13 +105,13 @@ GazeboRosMocapPrivate::on_deactivate(const rclcpp_lifecycle::State & state)
 }
 
 void
-GazeboRosMocapPrivate::control_start(const mocap_control_msgs::msg::Control::SharedPtr msg)
+GazeboRosMocapPrivate::control_start(const mocap4r2_control_msgs::msg::Control::SharedPtr msg)
 {
   RCLCPP_INFO(get_logger(), "Starting mocap gazebo");
 }
 
 void
-GazeboRosMocapPrivate::control_stop(const mocap_control_msgs::msg::Control::SharedPtr msg)
+GazeboRosMocapPrivate::control_stop(const mocap4r2_control_msgs::msg::Control::SharedPtr msg)
 {
   RCLCPP_INFO(get_logger(), "Stopping mocap gazebo");
 }
@@ -201,28 +201,28 @@ void GazeboRosMocap::OnUpdate()
   auto & rot = pose.Rot();
 
   if (impl_->mocap_markers_pub_->get_subscription_count() > 0) {
-    mocap_msgs::msg::Marker m1;
-    m1.id_type = mocap_msgs::msg::Marker::USE_INDEX;
+    mocap4r2_msgs::msg::Marker m1;
+    m1.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
     m1.marker_index = 1;
     m1.translation.x = pos.X();
     m1.translation.y = pos.Y();
     m1.translation.z = pos.Z() + 0.05;
 
-    mocap_msgs::msg::Marker m2;
-    m2.id_type = mocap_msgs::msg::Marker::USE_INDEX;
+    mocap4r2_msgs::msg::Marker m2;
+    m2.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
     m2.marker_index = 2;
     m2.translation.x = pos.X() + 0.02;
     m2.translation.y = pos.Y();
     m2.translation.z = pos.Z() + 0.03;
 
-    mocap_msgs::msg::Marker m3;
-    m3.id_type = mocap_msgs::msg::Marker::USE_INDEX;
+    mocap4r2_msgs::msg::Marker m3;
+    m3.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
     m3.marker_index = 3;
     m3.translation.x = pos.X();
     m3.translation.y = pos.Y() + 0.015;
     m3.translation.z = pos.Z() + 0.03;
 
-    mocap_msgs::msg::Markers ms;
+    mocap4r2_msgs::msg::Markers ms;
     ms.header.stamp = impl_->now();
     ms.header.frame_id = "map";
     ms.frame_number = impl_->frame_number_++;
@@ -232,7 +232,7 @@ void GazeboRosMocap::OnUpdate()
   }
 
   if (impl_->mocap_rigid_body_pub_->get_subscription_count() > 0) {
-    mocap_msgs::msg::RigidBody rb1;
+    mocap4r2_msgs::msg::RigidBody rb1;
     rb1.rigid_body_name = "rigid_body_1";
     rb1.pose.position.x = pos.X();
     rb1.pose.position.y = pos.Y();
@@ -242,22 +242,22 @@ void GazeboRosMocap::OnUpdate()
     rb1.pose.orientation.z = rot.Z();
     rb1.pose.orientation.w = rot.W();
 
-    mocap_msgs::msg::Marker m1;
-    m1.id_type = mocap_msgs::msg::Marker::USE_INDEX;
+    mocap4r2_msgs::msg::Marker m1;
+    m1.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
     m1.marker_index = 1;
     m1.translation.x = pos.X();
     m1.translation.y = pos.Y();
     m1.translation.z = pos.Z() + 0.05;
 
-    mocap_msgs::msg::Marker m2;
-    m2.id_type = mocap_msgs::msg::Marker::USE_INDEX;
+    mocap4r2_msgs::msg::Marker m2;
+    m2.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
     m2.marker_index = 2;
     m2.translation.x = pos.X() + 0.02;
     m2.translation.y = pos.Y();
     m2.translation.z = pos.Z() + 0.03;
 
-    mocap_msgs::msg::Marker m3;
-    m3.id_type = mocap_msgs::msg::Marker::USE_INDEX;
+    mocap4r2_msgs::msg::Marker m3;
+    m3.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
     m3.marker_index = 3;
     m3.translation.x = pos.X();
     m3.translation.y = pos.Y() + 0.015;
@@ -265,7 +265,7 @@ void GazeboRosMocap::OnUpdate()
 
     rb1.markers = {m1, m2, m3};
 
-    mocap_msgs::msg::RigidBodies rbs;
+    mocap4r2_msgs::msg::RigidBodies rbs;
     rbs.header.stamp = impl_->now();
     rbs.header.frame_id = "map";
     rbs.frame_number = impl_->frame_number_++;

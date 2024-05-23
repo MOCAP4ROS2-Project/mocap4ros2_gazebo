@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>gazebo_mocap_plugin</name>
+  <name>gazebo_mocap4r2_plugin</name>
   <version>0.0.0</version>
   <description>
     Gazebo plugins for mocap
@@ -17,8 +17,8 @@
 
   <depend>rclcpp</depend>
   <depend>geometry_msgs</depend>
-  <depend>mocap_msgs</depend>
-  <depend>mocap_control</depend>
+  <depend>mocap4r2_msgs</depend>
+  <depend>mocap4r2_control</depend>
   <depend>gazebo_dev</depend>
   <depend>gazebo_msgs</depend>
   <depend>gazebo_ros</depend>
