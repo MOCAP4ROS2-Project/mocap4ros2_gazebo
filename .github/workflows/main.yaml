@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      
 jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}
@@ -16,16 +15,17 @@ jobs:
         os: [ubuntu-22.04]
       fail-fast: false
     steps:
+      - uses: actions/checkout@v2
       - name: Setup ROS 2
-        uses: ros-tooling/setup-ros@0.3.3
+        uses: ros-tooling/setup-ros@0.7.1
         with:
           required-ros-distributions: humble
       - name: build and test
-        uses: ros-tooling/action-ros-ci@0.2.6
+        uses: ros-tooling/action-ros-ci@0.3.6
         with:
           package-name: gazebo_mocap_plugin mocap_msgs mocap_control mocap_control_msgs rqt_mocap_control
           target-ros2-distro: humble
-          vcs-repo-file-url: https://raw.githubusercontent.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/main/dependency_repos.repos
+          vcs-repo-file-url: ${GITHUB_WORKSPACE}/dependency_repos.repos
       - name: Codecov
         uses: codecov/codecov-action@v1.1.0
         with:
