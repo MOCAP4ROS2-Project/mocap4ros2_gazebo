@@ -23,7 +23,7 @@ jobs:
       - name: build and test
         uses: ros-tooling/action-ros-ci@0.3.6
         with:
-          package-name: gazebo_mocap_plugin mocap_msgs mocap_control mocap_control_msgs rqt_mocap_control
+          package-name: gazebo_mocap4r2_plugin mocap4r2_msgs mocap4r2_control mocap4r2_control_msgs rqt_mocap4r2_control
           target-ros2-distro: humble
           vcs-repo-file-url: ${GITHUB_WORKSPACE}/dependency_repos.repos
       - name: Codecov
