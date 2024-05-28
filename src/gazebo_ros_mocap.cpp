@@ -54,8 +54,10 @@ public:
   /// Connection to world update event. Callback is called while this is alive.
   gazebo::event::ConnectionPtr update_connection_;
   physics::WorldPtr world_;
-  physics::LinkPtr link_;
-  std::string link_name_;
+  std::vector<physics::LinkPtr> rigid_links_;
+  std::vector<physics::LinkPtr> marker_links_;
+  std::vector<std::string> rigid_link_names_;
+  std::vector<std::string> marker_link_names_;
 
   /// ROS communication.
   rclcpp_lifecycle::LifecyclePublisher<mocap4r2_msgs::msg::Markers>::SharedPtr mocap_markers_pub_;
@@ -161,29 +163,63 @@ void GazeboRosMocap::Load(physics::ModelPtr _parent, sdf::ElementPtr sdf)
 
   auto logger = impl_->get_logger();
 
-  if (!sdf->HasElement("link_name")) {
-    RCLCPP_INFO(
-      logger, "Gidmap plugin missing <link_name> wasn't set,"
-      "therefore it's been set as 'base_mocap'.");
-    impl_->link_name_ = "base_mocap";
-  } else {
-    impl_->link_name_ = sdf->GetElement("link_name")->Get<std::string>();
-  }
-  impl_->world_ = _parent->GetWorld();
-
-  for (const auto & model : impl_->world_->Models()) {
-    auto links = model->GetLinks();
-    impl_->link_ = find_link(links, impl_->link_name_);
-
-    if (impl_->link_ != nullptr) {
-      break;
+  if (sdf->HasElement("rigid_link")) {
+    auto link_name_element = sdf->GetElement("rigid_link");
+    while (link_name_element) {
+      impl_->rigid_link_names_.push_back(link_name_element->Get<std::string>());
+      link_name_element = link_name_element->GetNextElement("rigid_link");
     }
   }
 
-  if (impl_->link_ != nullptr) {
-    RCLCPP_INFO(logger, "Plugin MOCAP loaded for [%s] body", impl_->link_name_.c_str());
-  } else {
-    RCLCPP_ERROR(logger, "No link [%s] found for Plugin MOCAP", impl_->link_name_.c_str());
+  if (sdf->HasElement("marker_link")) {
+    auto link_name_element = sdf->GetElement("marker_link");
+    while (link_name_element) {
+      impl_->marker_link_names_.push_back(link_name_element->Get<std::string>());
+      link_name_element = link_name_element->GetNextElement("marker_link");
+    }
+  }
+
+  impl_->world_ = _parent->GetWorld();
+
+  for (const auto & link_name : impl_->rigid_link_names_) {
+    for (const auto & model : impl_->world_->Models()) {
+      auto links = model->GetLinks();
+      auto link = find_link(links, link_name);
+
+      if (link != nullptr) {
+        impl_->rigid_links_.push_back(link);
+        RCLCPP_INFO(logger, "Plugin MOCAP loaded for rigid link [%s]", link_name.c_str());
+        break;
+      }
+    }
+  }
+
+  for (const auto & link_name : impl_->marker_link_names_) {
+    for (const auto & model : impl_->world_->Models()) {
+      auto links = model->GetLinks();
+      auto link = find_link(links, link_name);
+
+      if (link != nullptr) {
+        impl_->marker_links_.push_back(link);
+        RCLCPP_INFO(logger, "Plugin MOCAP loaded for marker link [%s]", link_name.c_str());
+        break;
+      }
+    }
+  }
+
+  // Verificar si todos los enlaces fueron encontrados
+  for (const auto & link_name : impl_->rigid_link_names_) {
+    if (std::find_if(impl_->rigid_links_.begin(), impl_->rigid_links_.end(),
+                     [&](const physics::LinkPtr & link) { return link->GetName() == link_name; }) == impl_->rigid_links_.end()) {
+      RCLCPP_ERROR(logger, "No rigid link [%s] found for Plugin MOCAP", link_name.c_str());
+    }
+  }
+
+  for (const auto & link_name : impl_->marker_link_names_) {
+    if (std::find_if(impl_->marker_links_.begin(), impl_->marker_links_.end(),
+                     [&](const physics::LinkPtr & link) { return link->GetName() == link_name; }) == impl_->marker_links_.end()) {
+      RCLCPP_ERROR(logger, "No marker link [%s] found for Plugin MOCAP", link_name.c_str());
+    }
   }
 }
 
@@ -195,83 +231,110 @@ void GazeboRosMocap::OnUpdate()
     return;
   }
 
-  ignition::math::v6::Pose3d pose = impl_->link_->WorldPose();
+  for (const auto & link : impl_->rigid_links_) {
+    ignition::math::v6::Pose3d pose = link->WorldPose();
 
-  auto & pos = pose.Pos();
-  auto & rot = pose.Rot();
+    auto & pos = pose.Pos();
+    auto & rot = pose.Rot();
 
-  if (impl_->mocap_markers_pub_->get_subscription_count() > 0) {
-    mocap4r2_msgs::msg::Marker m1;
-    m1.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
-    m1.marker_index = 1;
-    m1.translation.x = pos.X();
-    m1.translation.y = pos.Y();
-    m1.translation.z = pos.Z() + 0.05;
+    if (impl_->mocap_markers_pub_->get_subscription_count() > 0) {
+      mocap4r2_msgs::msg::Marker m1;
+      m1.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
+      m1.marker_index = 1;
+      m1.translation.x = pos.X();
+      m1.translation.y = pos.Y();
+      m1.translation.z = pos.Z() + 0.05;
 
-    mocap4r2_msgs::msg::Marker m2;
-    m2.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
-    m2.marker_index = 2;
-    m2.translation.x = pos.X() + 0.02;
-    m2.translation.y = pos.Y();
-    m2.translation.z = pos.Z() + 0.03;
+      mocap4r2_msgs::msg::Marker m2;
+      m2.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
+      m2.marker_index = 2;
+      m2.translation.x = pos.X() + 0.02;
+      m2.translation.y = pos.Y();
+      m2.translation.z = pos.Z() + 0.03;
 
-    mocap4r2_msgs::msg::Marker m3;
-    m3.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
-    m3.marker_index = 3;
-    m3.translation.x = pos.X();
-    m3.translation.y = pos.Y() + 0.015;
-    m3.translation.z = pos.Z() + 0.03;
+      mocap4r2_msgs::msg::Marker m3;
+      m3.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
+      m3.marker_index = 3;
+      m3.translation.x = pos.X();
+      m3.translation.y = pos.Y() + 0.015;
+      m3.translation.z = pos.Z() + 0.03;
 
-    mocap4r2_msgs::msg::Markers ms;
-    ms.header.stamp = impl_->now();
-    ms.header.frame_id = "map";
-    ms.frame_number = impl_->frame_number_++;
-    ms.markers = {m1, m2, m3};
+      mocap4r2_msgs::msg::Markers ms;
+      ms.header.stamp = impl_->now();
+      ms.header.frame_id = "map";
+      ms.frame_number = impl_->frame_number_++;
+      ms.markers = {m1, m2, m3};
 
-    impl_->mocap_markers_pub_->publish(ms);
+      impl_->mocap_markers_pub_->publish(ms);
+      rclcpp::spin_some(impl_->get_node_base_interface());
+    }
+
+    if (impl_->mocap_rigid_body_pub_->get_subscription_count() > 0) {
+      mocap4r2_msgs::msg::RigidBody rb1;
+      rb1.rigid_body_name = "rigid_body_" + link->GetName();
+      rb1.pose.position.x = pos.X();
+      rb1.pose.position.y = pos.Y();
+      rb1.pose.position.z = pos.Z();
+      rb1.pose.orientation.x = rot.X();
+      rb1.pose.orientation.y = rot.Y();
+      rb1.pose.orientation.z = rot.Z();
+      rb1.pose.orientation.w = rot.W();
+
+      mocap4r2_msgs::msg::Marker m1;
+      m1.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
+      m1.marker_index = 1;
+      m1.translation.x = pos.X();
+      m1.translation.y = pos.Y();
+      m1.translation.z = pos.Z() + 0.05;
+
+      mocap4r2_msgs::msg::Marker m2;
+      m2.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
+      m2.marker_index = 2;
+      m2.translation.x = pos.X() + 0.02;
+      m2.translation.y = pos.Y();
+      m2.translation.z = pos.Z() + 0.03;
+
+      mocap4r2_msgs::msg::Marker m3;
+      m3.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
+      m3.marker_index = 3;
+      m3.translation.x = pos.X();
+      m3.translation.y = pos.Y() + 0.015;
+      m3.translation.z = pos.Z() + 0.03;
+
+      rb1.markers = {m1, m2, m3};
+
+      mocap4r2_msgs::msg::RigidBodies rbs;
+      rbs.header.stamp = impl_->now();
+      rbs.header.frame_id = "map";
+      rbs.rigidbodies = {rb1};
+
+      impl_->mocap_rigid_body_pub_->publish(rbs);
+      rclcpp::spin_some(impl_->get_node_base_interface());
+    }
   }
 
-  if (impl_->mocap_rigid_body_pub_->get_subscription_count() > 0) {
-    mocap4r2_msgs::msg::RigidBody rb1;
-    rb1.rigid_body_name = "rigid_body_1";
-    rb1.pose.position.x = pos.X();
-    rb1.pose.position.y = pos.Y();
-    rb1.pose.position.z = pos.Z();
-    rb1.pose.orientation.x = rot.X();
-    rb1.pose.orientation.y = rot.Y();
-    rb1.pose.orientation.z = rot.Z();
-    rb1.pose.orientation.w = rot.W();
+  for (const auto & link : impl_->marker_links_) {
+    ignition::math::v6::Pose3d pose = link->WorldPose();
 
-    mocap4r2_msgs::msg::Marker m1;
-    m1.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
-    m1.marker_index = 1;
-    m1.translation.x = pos.X();
-    m1.translation.y = pos.Y();
-    m1.translation.z = pos.Z() + 0.05;
+    auto & pos = pose.Pos();
 
-    mocap4r2_msgs::msg::Marker m2;
-    m2.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
-    m2.marker_index = 2;
-    m2.translation.x = pos.X() + 0.02;
-    m2.translation.y = pos.Y();
-    m2.translation.z = pos.Z() + 0.03;
+    if (impl_->mocap_markers_pub_->get_subscription_count() > 0) {
+      mocap4r2_msgs::msg::Marker m1;
+      m1.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
+      m1.marker_index = 1;
+      m1.translation.x = pos.X();
+      m1.translation.y = pos.Y();
+      m1.translation.z = pos.Z();
 
-    mocap4r2_msgs::msg::Marker m3;
-    m3.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
-    m3.marker_index = 3;
-    m3.translation.x = pos.X();
-    m3.translation.y = pos.Y() + 0.015;
-    m3.translation.z = pos.Z() + 0.03;
+      mocap4r2_msgs::msg::Markers ms;
+      ms.header.stamp = impl_->now();
+      ms.header.frame_id = "map";
+      ms.frame_number = impl_->frame_number_++;
+      ms.markers = {m1};
 
-    rb1.markers = {m1, m2, m3};
-
-    mocap4r2_msgs::msg::RigidBodies rbs;
-    rbs.header.stamp = impl_->now();
-    rbs.header.frame_id = "map";
-    rbs.frame_number = impl_->frame_number_++;
-    rbs.rigidbodies = {rb1};
-
-    impl_->mocap_rigid_body_pub_->publish(rbs);
+      impl_->mocap_markers_pub_->publish(ms);
+      rclcpp::spin_some(impl_->get_node_base_interface());
+    }
   }
 }
 
