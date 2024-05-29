@@ -13,6 +13,7 @@
 // limitations under the License.
 
 // Author: Jose Miguel Guerrero Hernandez <josemiguel.guerrero@urjc.es>
+// Modified by: Juan Carlos Manzanares Serrano <juancarlos.serrano@urjc.es>
 
 
 #include <memory>
@@ -25,6 +26,7 @@
 
 #include "mocap4r2_msgs/msg/markers.hpp"
 #include "mocap4r2_msgs/msg/rigid_bodies.hpp"
+#include "mocap4r2_msgs/srv/create_rigid_body.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
 
 #include "rclcpp/rclcpp.hpp"
@@ -51,16 +53,27 @@ public:
   void control_start(const mocap4r2_control_msgs::msg::Control::SharedPtr msg) override;
   void control_stop(const mocap4r2_control_msgs::msg::Control::SharedPtr msg) override;
 
+  void handleCreateRigidBody(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<mocap4r2_msgs::srv::CreateRigidBody::Request> request,
+    const std::shared_ptr<mocap4r2_msgs::srv::CreateRigidBody::Response> response);
+
   /// Connection to world update event. Callback is called while this is alive.
   gazebo::event::ConnectionPtr update_connection_;
   physics::WorldPtr world_;
-  physics::LinkPtr link_;
-  std::string link_name_;
+  std::vector<physics::LinkPtr> rigid_links_;
+  std::vector<physics::LinkPtr> marker_links_;
+  std::vector<std::string> rigid_link_names_;
+  std::vector<std::string> marker_link_names_;
+  std::map<int, mocap4r2_msgs::msg::Marker> markers_;
+  std::map<std::string, std::vector<int>> rigid_body_markers_;
+  std::map<std::string, std::string> rigid_body_orientation;
 
   /// ROS communication.
   rclcpp_lifecycle::LifecyclePublisher<mocap4r2_msgs::msg::Markers>::SharedPtr mocap_markers_pub_;
   rclcpp_lifecycle::LifecyclePublisher<mocap4r2_msgs::msg::RigidBodies>::SharedPtr
     mocap_rigid_body_pub_;
+  rclcpp::Service<mocap4r2_msgs::srv::CreateRigidBody>::SharedPtr mocap_create_rigid_body_service_;
   int frame_number_{0};
 };
 
@@ -78,6 +91,11 @@ GazeboRosMocapPrivate::on_configure(const rclcpp_lifecycle::State & state)
     "markers", rclcpp::QoS(1000));
   mocap_rigid_body_pub_ = create_publisher<mocap4r2_msgs::msg::RigidBodies>(
     "rigid_bodies", rclcpp::QoS(1000));
+  mocap_create_rigid_body_service_ = create_service<mocap4r2_msgs::srv::CreateRigidBody>(
+    "create_rigid_body",
+    std::bind(
+      &GazeboRosMocapPrivate::handleCreateRigidBody, this, std::placeholders::_1,
+      std::placeholders::_2, std::placeholders::_3));
 
   return ControlledLifecycleNode::on_configure(state);
 }
@@ -114,6 +132,20 @@ void
 GazeboRosMocapPrivate::control_stop(const mocap4r2_control_msgs::msg::Control::SharedPtr msg)
 {
   RCLCPP_INFO(get_logger(), "Stopping mocap gazebo");
+}
+
+void GazeboRosMocapPrivate::handleCreateRigidBody(
+  const std::shared_ptr<rmw_request_id_t> request_header,
+  const std::shared_ptr<mocap4r2_msgs::srv::CreateRigidBody::Request> request,
+  const std::shared_ptr<mocap4r2_msgs::srv::CreateRigidBody::Response> response)
+{
+  (void)request_header;
+  
+  RCLCPP_INFO(get_logger(), "Creating rigid body [%s]", request->rigid_body_name.c_str());
+  rigid_body_markers_[request->rigid_body_name] = request->markers;
+  rigid_body_orientation[request->rigid_body_name] = request->link_parent;
+
+  response->success = true;
 }
 
 GazeboRosMocap::GazeboRosMocap()
@@ -161,29 +193,70 @@ void GazeboRosMocap::Load(physics::ModelPtr _parent, sdf::ElementPtr sdf)
 
   auto logger = impl_->get_logger();
 
-  if (!sdf->HasElement("link_name")) {
-    RCLCPP_INFO(
-      logger, "Gidmap plugin missing <link_name> wasn't set,"
-      "therefore it's been set as 'base_mocap'.");
-    impl_->link_name_ = "base_mocap";
-  } else {
-    impl_->link_name_ = sdf->GetElement("link_name")->Get<std::string>();
-  }
-  impl_->world_ = _parent->GetWorld();
-
-  for (const auto & model : impl_->world_->Models()) {
-    auto links = model->GetLinks();
-    impl_->link_ = find_link(links, impl_->link_name_);
-
-    if (impl_->link_ != nullptr) {
-      break;
+  if (sdf->HasElement("rigid_link")) {
+    auto link_name_element = sdf->GetElement("rigid_link");
+    while (link_name_element) {
+      impl_->rigid_link_names_.push_back(link_name_element->Get<std::string>());
+      link_name_element = link_name_element->GetNextElement("rigid_link");
     }
   }
 
-  if (impl_->link_ != nullptr) {
-    RCLCPP_INFO(logger, "Plugin MOCAP loaded for [%s] body", impl_->link_name_.c_str());
-  } else {
-    RCLCPP_ERROR(logger, "No link [%s] found for Plugin MOCAP", impl_->link_name_.c_str());
+  if (sdf->HasElement("marker_link")) {
+    auto link_name_element = sdf->GetElement("marker_link");
+    while (link_name_element) {
+      impl_->marker_link_names_.push_back(link_name_element->Get<std::string>());
+      link_name_element = link_name_element->GetNextElement("marker_link");
+    }
+  }
+
+  impl_->world_ = _parent->GetWorld();
+
+  for (const auto & link_name : impl_->rigid_link_names_) {
+    for (const auto & model : impl_->world_->Models()) {
+      auto links = model->GetLinks();
+      auto link = find_link(links, link_name);
+
+      if (link != nullptr) {
+        impl_->rigid_links_.push_back(link);
+        RCLCPP_INFO(logger, "Plugin MOCAP loaded for rigid link [%s]", link_name.c_str());
+        break;
+      }
+    }
+  }
+
+  for (const auto & link_name : impl_->marker_link_names_) {
+    for (const auto & model : impl_->world_->Models()) {
+      auto links = model->GetLinks();
+      auto link = find_link(links, link_name);
+
+      if (link != nullptr) {
+        impl_->marker_links_.push_back(link);
+        RCLCPP_INFO(logger, "Plugin MOCAP loaded for marker link [%s]", link_name.c_str());
+        break;
+      }
+    }
+  }
+
+  for (const auto & link_name : impl_->rigid_link_names_) {
+    if (std::find_if(
+        impl_->rigid_links_.begin(), impl_->rigid_links_.end(),
+        [&](const physics::LinkPtr & link) {
+          return link->GetName() == link_name;
+        }) == impl_->rigid_links_.end())
+    {
+      RCLCPP_ERROR(logger, "No rigid link [%s] found for Plugin MOCAP", link_name.c_str());
+    }
+  }
+
+  for (const auto & link_name : impl_->marker_link_names_) {
+    if (std::find_if(
+        impl_->marker_links_.begin(), impl_->marker_links_.end(),
+        [&](const physics::LinkPtr & link) {
+          return link->GetName() == link_name;
+        }) == impl_->marker_links_.end())
+    {
+      RCLCPP_ERROR(logger, "No marker link [%s] found for Plugin MOCAP", link_name.c_str());
+    }
   }
 }
 
@@ -195,82 +268,130 @@ void GazeboRosMocap::OnUpdate()
     return;
   }
 
-  ignition::math::v6::Pose3d pose = impl_->link_->WorldPose();
+  mocap4r2_msgs::msg::Markers ms;
+  ms.header.stamp = impl_->now();
+  ms.frame_number = impl_->frame_number_;
+  ms.header.frame_id = "map";
 
-  auto & pos = pose.Pos();
-  auto & rot = pose.Rot();
+  mocap4r2_msgs::msg::RigidBodies rbs;
+  rbs.header.stamp = impl_->now();
+  rbs.frame_number = impl_->frame_number_;
+  rbs.header.frame_id = "map";
 
-  if (impl_->mocap_markers_pub_->get_subscription_count() > 0) {
+  impl_->frame_number_;
+  int index = 1;
+
+  for (const auto & link : impl_->rigid_links_) {
+    ignition::math::v6::Pose3d pose = link->WorldPose();
+
+    auto & pos = pose.Pos();
+    auto & rot = pose.Rot();
+
     mocap4r2_msgs::msg::Marker m1;
     m1.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
-    m1.marker_index = 1;
+    m1.marker_index = index++;
     m1.translation.x = pos.X();
     m1.translation.y = pos.Y();
     m1.translation.z = pos.Z() + 0.05;
 
     mocap4r2_msgs::msg::Marker m2;
     m2.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
-    m2.marker_index = 2;
+    m2.marker_index = index++;
     m2.translation.x = pos.X() + 0.02;
     m2.translation.y = pos.Y();
     m2.translation.z = pos.Z() + 0.03;
 
     mocap4r2_msgs::msg::Marker m3;
     m3.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
-    m3.marker_index = 3;
+    m3.marker_index = index++;
     m3.translation.x = pos.X();
     m3.translation.y = pos.Y() + 0.015;
     m3.translation.z = pos.Z() + 0.03;
 
-    mocap4r2_msgs::msg::Markers ms;
-    ms.header.stamp = impl_->now();
-    ms.header.frame_id = "map";
-    ms.frame_number = impl_->frame_number_++;
-    ms.markers = {m1, m2, m3};
+    mocap4r2_msgs::msg::RigidBody rb;
+    rb.rigid_body_name = "rigid_body_" + link->GetName();
+    rb.pose.position.x = pos.X();
+    rb.pose.position.y = pos.Y();
+    rb.pose.position.z = pos.Z();
+    rb.pose.orientation.x = rot.X();
+    rb.pose.orientation.y = rot.Y();
+    rb.pose.orientation.z = rot.Z();
+    rb.pose.orientation.w = rot.W();
 
+    rb.markers = {m1, m2, m3};
+
+    ms.markers.push_back(m1);
+    ms.markers.push_back(m2);
+    ms.markers.push_back(m3);
+    rbs.rigidbodies.push_back(rb);
+
+    impl_->markers_[m1.marker_index] = m1;
+    impl_->markers_[m2.marker_index] = m2;
+    impl_->markers_[m3.marker_index] = m3;
+  }
+
+  for (const auto & link : impl_->marker_links_) {
+    ignition::math::v6::Pose3d pose = link->WorldPose();
+
+    auto & pos = pose.Pos();
+
+    mocap4r2_msgs::msg::Marker m1;
+    m1.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
+    m1.marker_index = index++;
+    m1.translation.x = pos.X();
+    m1.translation.y = pos.Y();
+    m1.translation.z = pos.Z();
+
+    ms.markers.push_back(m1);
+    impl_->markers_[m1.marker_index] = m1;
+  }
+
+  for (const auto & [rigid_body_name, markers] : impl_->rigid_body_markers_) {
+    mocap4r2_msgs::msg::RigidBody rb;
+    geometry_msgs::msg::Point rigid_body_pose;
+    rb.rigid_body_name = rigid_body_name;
+
+    for (const auto & marker_index : markers) {
+      auto it = impl_->markers_.find(marker_index);
+      if (it != impl_->markers_.end()) {
+        rb.markers.push_back(it->second);
+        rigid_body_pose.x += it->second.translation.x;
+        rigid_body_pose.y += it->second.translation.y;
+        rigid_body_pose.z += it->second.translation.z;
+      }
+    }
+
+    geometry_msgs::msg::Point centroid;
+    centroid.x = rigid_body_pose.x / rb.markers.size();;
+    centroid.y = rigid_body_pose.y / rb.markers.size();;
+    centroid.z = rigid_body_pose.z / rb.markers.size();;
+
+    rb.pose.position = centroid;
+
+    for (const auto & model : impl_->world_->Models()) {
+      auto links = model->GetLinks();
+      auto link = find_link(links, impl_->rigid_body_orientation[rigid_body_name]);
+
+      if (link != nullptr) {
+        ignition::math::v6::Pose3d pose = link->WorldPose();
+        auto & rot = pose.Rot();
+
+        rb.pose.orientation.x = rot.X();
+        rb.pose.orientation.y = rot.Y();
+        rb.pose.orientation.z = rot.Z();
+        rb.pose.orientation.w = rot.W();
+        break;
+      }
+    }
+
+    rbs.rigidbodies.push_back(rb);
+  }
+
+  if (impl_->mocap_markers_pub_->get_subscription_count() > 0) {
     impl_->mocap_markers_pub_->publish(ms);
   }
 
   if (impl_->mocap_rigid_body_pub_->get_subscription_count() > 0) {
-    mocap4r2_msgs::msg::RigidBody rb1;
-    rb1.rigid_body_name = "rigid_body_1";
-    rb1.pose.position.x = pos.X();
-    rb1.pose.position.y = pos.Y();
-    rb1.pose.position.z = pos.Z();
-    rb1.pose.orientation.x = rot.X();
-    rb1.pose.orientation.y = rot.Y();
-    rb1.pose.orientation.z = rot.Z();
-    rb1.pose.orientation.w = rot.W();
-
-    mocap4r2_msgs::msg::Marker m1;
-    m1.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
-    m1.marker_index = 1;
-    m1.translation.x = pos.X();
-    m1.translation.y = pos.Y();
-    m1.translation.z = pos.Z() + 0.05;
-
-    mocap4r2_msgs::msg::Marker m2;
-    m2.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
-    m2.marker_index = 2;
-    m2.translation.x = pos.X() + 0.02;
-    m2.translation.y = pos.Y();
-    m2.translation.z = pos.Z() + 0.03;
-
-    mocap4r2_msgs::msg::Marker m3;
-    m3.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
-    m3.marker_index = 3;
-    m3.translation.x = pos.X();
-    m3.translation.y = pos.Y() + 0.015;
-    m3.translation.z = pos.Z() + 0.03;
-
-    rb1.markers = {m1, m2, m3};
-
-    mocap4r2_msgs::msg::RigidBodies rbs;
-    rbs.header.stamp = impl_->now();
-    rbs.header.frame_id = "map";
-    rbs.frame_number = impl_->frame_number_++;
-    rbs.rigidbodies = {rb1};
-
     impl_->mocap_rigid_body_pub_->publish(rbs);
   }
 }
