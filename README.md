@@ -7,7 +7,7 @@ This package provides you with a gazebo plugin that allows you to simulate the u
 
 Add in your robot model the following, as done in [This sample model](https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/blob/main/models/waffle.model):
 
-```
+```xml
     <link name="base_mocap">
         <pose>"0 0 0.577 0 0 0</pose>
         <inertial>
@@ -33,22 +33,37 @@ Add in your robot model the following, as done in [This sample model](https://gi
     <gazebo>
     <plugin name="gazebo_ros_mocap" filename="libgazebo_ros_mocap.so">
       <model_name>robot</model_name>
-      <link_name>base_footprint</link_name>
+      <rigid_link>base_footprint</rigid_link>
     </plugin>
     </gazebo>
+```
+
+If what you want is to add markers, you can do so by adding the following line in your plugin. For this case, we would add a marker in base_footprint:
+```xml
+<plugin name="gazebo_ros_mocap" filename="libgazebo_ros_mocap.so">
+    <model_name>robot</model_name>
+    <marker_link>base_link</marker_link>
+</plugin>
+ ```
+
+And if you have 3 or more markers within your environment, you can create new rigid_bodies from them. To do this, you have to choose the orientation through a link and add the index of the markers you want to add.
+```bash
+ros2 service call /create_rigid_body mocap4r2_msgs/srv/CreateRigidBody 'rigid_body_name: '\'new_rigid''\''
+link_parent: '\'base_link''\''
+markers: [1, 2, 5, 8]'
 ```
 
 ## Run the sample
 
 To see it in action, just type:
 
-```
+```bash
 ros2 launch gazebo_mocap4r2_plugin tb3_simulation_launch.py
 ```
 
 Open gzclient in other terminal:
 
-```
+```bash
 gzclient
 ```
 
