@@ -70,10 +70,12 @@ public:
   std::map<std::string, std::string> rigid_body_orientation;
 
   /// ROS communication.
-  rclcpp_lifecycle::LifecyclePublisher<mocap_interfaces::msg::MarkerArray>::SharedPtr mocap_markers_pub_;
+  rclcpp_lifecycle::LifecyclePublisher<mocap_interfaces::msg::MarkerArray>::SharedPtr
+    mocap_markers_pub_;
   rclcpp_lifecycle::LifecyclePublisher<mocap_interfaces::msg::RigidBodyArray>::SharedPtr
     mocap_rigid_body_pub_;
-  rclcpp::Service<mocap_interfaces::srv::CreateRigidBody>::SharedPtr mocap_create_rigid_body_service_;
+  rclcpp::Service<mocap_interfaces::srv::CreateRigidBody>::SharedPtr
+    mocap_create_rigid_body_service_;
   int seq_{0};
 };
 
