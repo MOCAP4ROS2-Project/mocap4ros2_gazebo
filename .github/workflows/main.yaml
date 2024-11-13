@@ -1,12 +1,12 @@
-name: main
+name: jazzy-devel
 
 on:
   pull_request:
     branches:
-      - main
+      - jazzy-devel
   push:
     branches:
-      - main
+      - jazyy-devel
 jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}
@@ -19,12 +19,12 @@ jobs:
       - name: Setup ROS 2
         uses: ros-tooling/setup-ros@0.7.1
         with:
-          required-ros-distributions: humble
+          required-ros-distributions: jazzy
       - name: build and test
         uses: ros-tooling/action-ros-ci@0.3.6
         with:
-          package-name: gazebo_mocap4r2_plugin mocap4r2_msgs mocap4r2_control mocap4r2_control_msgs rqt_mocap4r2_control
-          target-ros2-distro: humble
+          package-name: gazebo_mocap4r2_plugin mocap_interfaces mocap4r2_control mocap4r2_control_msgs rqt_mocap4r2_control
+          target-ros2-distro: jazzy
           vcs-repo-file-url: ${GITHUB_WORKSPACE}/dependency_repos.repos
       - name: Codecov
         uses: codecov/codecov-action@v1.1.0
