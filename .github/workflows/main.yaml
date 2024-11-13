@@ -1,30 +1,30 @@
-name: jazzy-devel
+name: rolling
 
 on:
   pull_request:
     branches:
-      - jazzy-devel
+      - rolling
   push:
     branches:
-      - jazyy-devel
+      - rolling
 jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-24.04]
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
       - name: Setup ROS 2
         uses: ros-tooling/setup-ros@0.7.1
         with:
-          required-ros-distributions: jazzy
+          required-ros-distributions: rolling
       - name: build and test
         uses: ros-tooling/action-ros-ci@0.3.6
         with:
           package-name: gazebo_mocap4r2_plugin mocap_interfaces mocap4r2_control mocap4r2_control_msgs rqt_mocap4r2_control
-          target-ros2-distro: jazzy
+          target-ros2-distro: rolling
           vcs-repo-file-url: ${GITHUB_WORKSPACE}/dependency_repos.repos
       - name: Codecov
         uses: codecov/codecov-action@v1.1.0
