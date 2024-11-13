@@ -1,9 +1,9 @@
 repositories:
-  mocap4r2_msgs:
+  mocap_interfaces:
     type: git
-    url: https://github.com/MOCAP4ROS2-Project/mocap4r2_msgs.git
-    version: humble-devel
+    url: https://github.com/MOCAP4ROS2-Project/mocap_interfaces.git
+    version: humble
   mocap4r2:
     type: git
     url: https://github.com/MOCAP4ROS2-Project/mocap4r2.git
-    version: humble-devel
+    version: rep-mocap-humble

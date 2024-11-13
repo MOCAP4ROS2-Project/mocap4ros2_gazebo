@@ -26,7 +26,7 @@ find_package(gazebo_dev REQUIRED)
 find_package(gazebo_msgs REQUIRED)
 find_package(gazebo_ros REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(mocap4r2_msgs REQUIRED)
+find_package(mocap_interfaces REQUIRED)
 find_package(mocap4r2_control REQUIRED)
 find_package(rclcpp REQUIRED)
 
@@ -53,7 +53,7 @@ ament_target_dependencies(gazebo_ros_mocap
   "gazebo_dev"
   "gazebo_ros"
   "rclcpp"
-  "mocap4r2_msgs"
+  "mocap_interfaces"
   "mocap4r2_control"
   "geometry_msgs"
 )

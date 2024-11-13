@@ -17,7 +17,7 @@
 
   <depend>rclcpp</depend>
   <depend>geometry_msgs</depend>
-  <depend>mocap4r2_msgs</depend>
+  <depend>mocap_interfaces</depend>
   <depend>mocap4r2_control</depend>
   <depend>gazebo_dev</depend>
   <depend>gazebo_msgs</depend>

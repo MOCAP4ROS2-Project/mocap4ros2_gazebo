@@ -24,9 +24,9 @@
 #include <gazebo_plugins/gazebo_ros_mocap.hpp>
 #include <gazebo_ros/node.hpp>
 
-#include "mocap4r2_msgs/msg/markers.hpp"
-#include "mocap4r2_msgs/msg/rigid_bodies.hpp"
-#include "mocap4r2_msgs/srv/create_rigid_body.hpp"
+#include "mocap_interfaces/msg/marker_array.hpp"
+#include "mocap_interfaces/msg/rigid_body_array.hpp"
+#include "mocap_interfaces/srv/create_rigid_body.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
 
 #include "rclcpp/rclcpp.hpp"
@@ -55,8 +55,8 @@ public:
 
   void handleCreateRigidBody(
     const std::shared_ptr<rmw_request_id_t> request_header,
-    const std::shared_ptr<mocap4r2_msgs::srv::CreateRigidBody::Request> request,
-    const std::shared_ptr<mocap4r2_msgs::srv::CreateRigidBody::Response> response);
+    const std::shared_ptr<mocap_interfaces::srv::CreateRigidBody::Request> request,
+    const std::shared_ptr<mocap_interfaces::srv::CreateRigidBody::Response> response);
 
   /// Connection to world update event. Callback is called while this is alive.
   gazebo::event::ConnectionPtr update_connection_;
@@ -65,16 +65,18 @@ public:
   std::vector<physics::LinkPtr> marker_links_;
   std::vector<std::string> rigid_link_names_;
   std::vector<std::string> marker_link_names_;
-  std::map<int, mocap4r2_msgs::msg::Marker> markers_;
+  std::map<int, mocap_interfaces::msg::Marker> markers_;
   std::map<std::string, std::vector<int>> rigid_body_markers_;
   std::map<std::string, std::string> rigid_body_orientation;
 
   /// ROS communication.
-  rclcpp_lifecycle::LifecyclePublisher<mocap4r2_msgs::msg::Markers>::SharedPtr mocap_markers_pub_;
-  rclcpp_lifecycle::LifecyclePublisher<mocap4r2_msgs::msg::RigidBodies>::SharedPtr
+  rclcpp_lifecycle::LifecyclePublisher<mocap_interfaces::msg::MarkerArray>::SharedPtr
+    mocap_markers_pub_;
+  rclcpp_lifecycle::LifecyclePublisher<mocap_interfaces::msg::RigidBodyArray>::SharedPtr
     mocap_rigid_body_pub_;
-  rclcpp::Service<mocap4r2_msgs::srv::CreateRigidBody>::SharedPtr mocap_create_rigid_body_service_;
-  int frame_number_{0};
+  rclcpp::Service<mocap_interfaces::srv::CreateRigidBody>::SharedPtr
+    mocap_create_rigid_body_service_;
+  int seq_{0};
 };
 
 GazeboRosMocapPrivate::GazeboRosMocapPrivate()
@@ -87,11 +89,11 @@ GazeboRosMocapPrivate::GazeboRosMocapPrivate()
 CallbackReturnT
 GazeboRosMocapPrivate::on_configure(const rclcpp_lifecycle::State & state)
 {
-  mocap_markers_pub_ = create_publisher<mocap4r2_msgs::msg::Markers>(
+  mocap_markers_pub_ = create_publisher<mocap_interfaces::msg::MarkerArray>(
     "markers", rclcpp::QoS(1000));
-  mocap_rigid_body_pub_ = create_publisher<mocap4r2_msgs::msg::RigidBodies>(
+  mocap_rigid_body_pub_ = create_publisher<mocap_interfaces::msg::RigidBodyArray>(
     "rigid_bodies", rclcpp::QoS(1000));
-  mocap_create_rigid_body_service_ = create_service<mocap4r2_msgs::srv::CreateRigidBody>(
+  mocap_create_rigid_body_service_ = create_service<mocap_interfaces::srv::CreateRigidBody>(
     "create_rigid_body",
     std::bind(
       &GazeboRosMocapPrivate::handleCreateRigidBody, this, std::placeholders::_1,
@@ -136,8 +138,8 @@ GazeboRosMocapPrivate::control_stop(const mocap4r2_control_msgs::msg::Control::S
 
 void GazeboRosMocapPrivate::handleCreateRigidBody(
   const std::shared_ptr<rmw_request_id_t> request_header,
-  const std::shared_ptr<mocap4r2_msgs::srv::CreateRigidBody::Request> request,
-  const std::shared_ptr<mocap4r2_msgs::srv::CreateRigidBody::Response> response)
+  const std::shared_ptr<mocap_interfaces::srv::CreateRigidBody::Request> request,
+  const std::shared_ptr<mocap_interfaces::srv::CreateRigidBody::Response> response)
 {
   (void)request_header;
 
@@ -268,17 +270,17 @@ void GazeboRosMocap::OnUpdate()
     return;
   }
 
-  mocap4r2_msgs::msg::Markers ms;
+  mocap_interfaces::msg::MarkerArray ms;
   ms.header.stamp = impl_->now();
-  ms.frame_number = impl_->frame_number_;
+  ms.seq = impl_->seq_;
   ms.header.frame_id = "map";
 
-  mocap4r2_msgs::msg::RigidBodies rbs;
+  mocap_interfaces::msg::RigidBodyArray rbs;
   rbs.header.stamp = impl_->now();
-  rbs.frame_number = impl_->frame_number_;
+  rbs.seq = impl_->seq_;
   rbs.header.frame_id = "map";
 
-  impl_->frame_number_;
+  impl_->seq_;
   int index = 1;
 
   for (const auto & link : impl_->rigid_links_) {
@@ -287,28 +289,32 @@ void GazeboRosMocap::OnUpdate()
     auto & pos = pose.Pos();
     auto & rot = pose.Rot();
 
-    mocap4r2_msgs::msg::Marker m1;
-    m1.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
+    mocap_interfaces::msg::Marker m1;
+    m1.header.stamp = impl_->now();
+    m1.id_type = mocap_interfaces::msg::Marker::USE_INDEX;
     m1.marker_index = index++;
     m1.translation.x = pos.X();
     m1.translation.y = pos.Y();
     m1.translation.z = pos.Z() + 0.05;
 
-    mocap4r2_msgs::msg::Marker m2;
-    m2.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
+    mocap_interfaces::msg::Marker m2;
+    m2.header.stamp = impl_->now();
+    m2.id_type = mocap_interfaces::msg::Marker::USE_INDEX;
     m2.marker_index = index++;
     m2.translation.x = pos.X() + 0.02;
     m2.translation.y = pos.Y();
     m2.translation.z = pos.Z() + 0.03;
 
-    mocap4r2_msgs::msg::Marker m3;
-    m3.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
+    mocap_interfaces::msg::Marker m3;
+    m3.header.stamp = impl_->now();
+    m3.id_type = mocap_interfaces::msg::Marker::USE_INDEX;
     m3.marker_index = index++;
     m3.translation.x = pos.X();
     m3.translation.y = pos.Y() + 0.015;
     m3.translation.z = pos.Z() + 0.03;
 
-    mocap4r2_msgs::msg::RigidBody rb;
+    mocap_interfaces::msg::RigidBody rb;
+    rb.header.stamp = impl_->now();
     rb.rigid_body_name = "rigid_body_" + link->GetName();
     rb.pose.position.x = pos.X();
     rb.pose.position.y = pos.Y();
@@ -323,7 +329,7 @@ void GazeboRosMocap::OnUpdate()
     ms.markers.push_back(m1);
     ms.markers.push_back(m2);
     ms.markers.push_back(m3);
-    rbs.rigidbodies.push_back(rb);
+    rbs.rigid_bodies.push_back(rb);
 
     impl_->markers_[m1.marker_index] = m1;
     impl_->markers_[m2.marker_index] = m2;
@@ -335,8 +341,9 @@ void GazeboRosMocap::OnUpdate()
 
     auto & pos = pose.Pos();
 
-    mocap4r2_msgs::msg::Marker m1;
-    m1.id_type = mocap4r2_msgs::msg::Marker::USE_INDEX;
+    mocap_interfaces::msg::Marker m1;
+    m1.header.stamp = impl_->now();
+    m1.id_type = mocap_interfaces::msg::Marker::USE_INDEX;
     m1.marker_index = index++;
     m1.translation.x = pos.X();
     m1.translation.y = pos.Y();
@@ -347,8 +354,9 @@ void GazeboRosMocap::OnUpdate()
   }
 
   for (const auto & [rigid_body_name, markers] : impl_->rigid_body_markers_) {
-    mocap4r2_msgs::msg::RigidBody rb;
+    mocap_interfaces::msg::RigidBody rb;
     geometry_msgs::msg::Point rigid_body_pose;
+    rb.header.stamp = impl_->now();
     rb.rigid_body_name = rigid_body_name;
 
     for (const auto & marker_index : markers) {
@@ -384,7 +392,7 @@ void GazeboRosMocap::OnUpdate()
       }
     }
 
-    rbs.rigidbodies.push_back(rb);
+    rbs.rigid_bodies.push_back(rb);
   }
 
   if (impl_->mocap_markers_pub_->get_subscription_count() > 0) {
