@@ -24,44 +24,44 @@ using CallbackReturnT =
 
 class gz::sim::systems::GzRosMocapPrivate : public mocap4r2_control::ControlledLifecycleNode
 {
-  public:
-    GzRosMocapPrivate();
-    ~GzRosMocapPrivate() = default;
+public:
+  GzRosMocapPrivate();
+  ~GzRosMocapPrivate() = default;
 
-    CallbackReturnT on_configure(const rclcpp_lifecycle::State & state) override;
-    CallbackReturnT on_activate(const rclcpp_lifecycle::State & state) override;
-    CallbackReturnT on_deactivate(const rclcpp_lifecycle::State & state) override;
+  CallbackReturnT on_configure(const rclcpp_lifecycle::State & state) override;
+  CallbackReturnT on_activate(const rclcpp_lifecycle::State & state) override;
+  CallbackReturnT on_deactivate(const rclcpp_lifecycle::State & state) override;
 
-    void control_start(const mocap4r2_control_msgs::msg::Control::SharedPtr msg) override;
-    void control_stop(const mocap4r2_control_msgs::msg::Control::SharedPtr msg) override;
+  void control_start(const mocap4r2_control_msgs::msg::Control::SharedPtr msg) override;
+  void control_stop(const mocap4r2_control_msgs::msg::Control::SharedPtr msg) override;
 
-    void handleCreateRigidBody(
-      const std::shared_ptr<rmw_request_id_t> request_header,
-      const std::shared_ptr<mocap_interfaces::srv::CreateRigidBody::Request> request,
-      const std::shared_ptr<mocap_interfaces::srv::CreateRigidBody::Response> response);
+  void handleCreateRigidBody(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<mocap_interfaces::srv::CreateRigidBody::Request> request,
+    const std::shared_ptr<mocap_interfaces::srv::CreateRigidBody::Response> response);
 
-    std::vector<Entity> rigid_links_;
-    std::vector<Entity> marker_links_;
-    std::vector<std::string> rigid_links_names_;
-    std::vector<std::string> marker_links_names_;
-    std::map<int, mocap_interfaces::msg::Marker> markers_;
-    std::map<std::string, std::vector<int>> rigid_body_markers_;
-    std::map<std::string, std::string> rigid_body_orientation;
-    Model model{kNullEntity};
+  std::vector<Entity> rigid_links_;
+  std::vector<Entity> marker_links_;
+  std::vector<std::string> rigid_links_names_;
+  std::vector<std::string> marker_links_names_;
+  std::map<int, mocap_interfaces::msg::Marker> markers_;
+  std::map<std::string, std::vector<int>> rigid_body_markers_;
+  std::map<std::string, std::string> rigid_body_orientation;
+  Model model{kNullEntity};
 
-    rclcpp_lifecycle::LifecyclePublisher<mocap_interfaces::msg::MarkerArray>::SharedPtr
-      mocap_markers_pub_;
-    rclcpp_lifecycle::LifecyclePublisher<mocap_interfaces::msg::RigidBodyArray>::SharedPtr
-      mocap_rigid_body_pub_;
-    rclcpp::Service<mocap_interfaces::srv::CreateRigidBody>::SharedPtr
-      mocap_create_rigid_body_service_;
-    int seq_{0};
+  rclcpp_lifecycle::LifecyclePublisher<mocap_interfaces::msg::MarkerArray>::SharedPtr
+    mocap_markers_pub_;
+  rclcpp_lifecycle::LifecyclePublisher<mocap_interfaces::msg::RigidBodyArray>::SharedPtr
+    mocap_rigid_body_pub_;
+  rclcpp::Service<mocap_interfaces::srv::CreateRigidBody>::SharedPtr
+    mocap_create_rigid_body_service_;
+  int seq_{0};
 };
 
 GzRosMocapPrivate::GzRosMocapPrivate()
 : ControlledLifecycleNode("gz_control")
 {
-  
+
   trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE);
 }
 
@@ -135,10 +135,11 @@ GzRosMocap::GzRosMocap()
   impl_ = std::make_unique<GzRosMocapPrivate>();
 }
 
-void GzRosMocap::Configure(const gz::sim::Entity &_entity,
-                           const std::shared_ptr<const sdf::Element> &_sdf,
-                           gz::sim::EntityComponentManager &_ecm,
-                           gz::sim::EventManager &_eventMgr)
+void GzRosMocap::Configure(
+  const gz::sim::Entity & _entity,
+  const std::shared_ptr<const sdf::Element> & _sdf,
+  gz::sim::EntityComponentManager & _ecm,
+  gz::sim::EventManager & _eventMgr)
 {
   impl_->model = Model(_entity);
 
@@ -177,8 +178,9 @@ void GzRosMocap::Configure(const gz::sim::Entity &_entity,
   }
 }
 
-void GzRosMocap::PostUpdate(const gz::sim::v8::UpdateInfo &_info,
-                const gz::sim::v8::EntityComponentManager &_ecm)
+void GzRosMocap::PostUpdate(
+  const gz::sim::v8::UpdateInfo & _info,
+  const gz::sim::v8::EntityComponentManager & _ecm)
 {
   rclcpp::spin_some(impl_->get_node_base_interface());
 
@@ -232,7 +234,7 @@ void GzRosMocap::PostUpdate(const gz::sim::v8::UpdateInfo &_info,
 
     mocap_interfaces::msg::RigidBody rb;
     rb.header.stamp = impl_->now();
-     rb.rigid_body_name = impl_->rigid_links_names_[i];
+    rb.rigid_body_name = impl_->rigid_links_names_[i];
     rb.pose.position.x = pos.X();
     rb.pose.position.y = pos.Y();
     rb.pose.position.z = pos.Z();
@@ -293,7 +295,9 @@ void GzRosMocap::PostUpdate(const gz::sim::v8::UpdateInfo &_info,
 
     rb.pose.position = centroid;
 
-    if (impl_->rigid_body_orientation.find(rigid_body_name) != impl_->rigid_body_orientation.end()) {
+    if (impl_->rigid_body_orientation.find(rigid_body_name) !=
+      impl_->rigid_body_orientation.end())
+    {
       auto link = impl_->model.LinkByName(_ecm, impl_->rigid_body_orientation[rigid_body_name]);
       math::Pose3d pose = worldPose(link, _ecm);
       auto & rot = pose.Rot();

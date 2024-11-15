@@ -38,34 +38,36 @@ namespace gz
 namespace sim
 {
 // Inline bracket to help doxygen filtering.
-inline namespace GZ_SIM_VERSION_NAMESPACE {
+inline namespace GZ_SIM_VERSION_NAMESPACE
+{
 namespace systems
 {
-  class GzRosMocapPrivate;
+class GzRosMocapPrivate;
 
-  class GzRosMocap:
-    public gz::sim::System,
-    public gz::sim::ISystemConfigure,
-    public gz::sim::ISystemPostUpdate
-  {
-    public:
-      GzRosMocap();
-      ~GzRosMocap() override = default;
-      void Configure(const gz::sim::Entity &_entity,
-               const std::shared_ptr<const sdf::Element> &_sdf,
-               gz::sim::EntityComponentManager &_ecm,
-               gz::sim::EventManager &_eventMgr) override;
+class GzRosMocap
+  : public gz::sim::System,
+  public gz::sim::ISystemConfigure,
+  public gz::sim::ISystemPostUpdate
+{
+public:
+  GzRosMocap();
+  ~GzRosMocap() override = default;
+  void Configure(
+    const gz::sim::Entity & _entity,
+    const std::shared_ptr<const sdf::Element> & _sdf,
+    gz::sim::EntityComponentManager & _ecm,
+    gz::sim::EventManager & _eventMgr) override;
 
-      void PostUpdate(const gz::sim::v8::UpdateInfo &_info,
-                const gz::sim::v8::EntityComponentManager &_ecm) override;
+  void PostUpdate(
+    const gz::sim::v8::UpdateInfo & _info,
+    const gz::sim::v8::EntityComponentManager & _ecm) override;
 
-    private:
-      std::unique_ptr<GzRosMocapPrivate> impl_;    
-  };
+private:
+  std::unique_ptr<GzRosMocapPrivate> impl_;
+};
 } // namespace systems
 } // inline namespace GZ_SIM_VERSION_NAMESPACE
 } // namespace sim
 } // namespace gz
 
 #endif  // GZ_PLUGINS__GZ_ROS_MOCAP_HPP_
-
