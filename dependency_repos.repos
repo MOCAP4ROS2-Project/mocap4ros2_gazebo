@@ -6,7 +6,7 @@ repositories:
   mocap4r2:
     type: git
     url: https://github.com/MOCAP4ROS2-Project/mocap4r2.git
-    version: rep-mocap-jazzy
+    version: rep-mocap
   navigation2:
     type: git
     url: https://github.com/ros-navigation/navigation2.git
