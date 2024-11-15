@@ -489,8 +489,8 @@
       </plugin>
 
       <plugin
-        filename="gz-ros-mocap"
-        name="gz::sim::systems::GzRosMocap">
+        filename="mocap-gz-ros"
+        name="gz::sim::systems::MocapGzRos">
         <rigid_link>base_footprint</rigid_link>
     </plugin>
 

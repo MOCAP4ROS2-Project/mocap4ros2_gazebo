@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1 FATAL_ERROR)
 
-project(gz_mocap4r2_plugin)
+project(mocap4r2_gz_plugin)
 
 find_package(ament_cmake REQUIRED)
 find_package(gz-cmake3 REQUIRED)
@@ -21,18 +21,18 @@ set(GZ_SENSORS_VER ${gz-sensors8_VERSION_MAJOR})
 
 include_directories(include)
 
-add_library(gz_ros_mocap SHARED src/gz_ros_mocap.cpp)
+add_library(mocap_gz_ros SHARED src/mocap_gz_ros.cpp)
 
-set_target_properties(gz_ros_mocap PROPERTIES OUTPUT_NAME gz-ros-mocap SUFFIX "" PREFIX "")
+set_target_properties(mocap_gz_ros PROPERTIES OUTPUT_NAME mocap-gz-ros SUFFIX "" PREFIX "")
 
-ament_target_dependencies(gz_ros_mocap
+ament_target_dependencies(mocap_gz_ros
   rclcpp
   geometry_msgs
   mocap_interfaces
   mocap4r2_control
 )
 
-target_link_libraries(gz_ros_mocap
+target_link_libraries(mocap_gz_ros
   gz-plugin${GZ_PLUGIN_VER}::gz-plugin${GZ_PLUGIN_VER}
   gz-sim${GZ_SIM_VER}::gz-sim${GZ_SIM_VER}
 )
@@ -42,9 +42,9 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}/
 )
 
-install(TARGETS gz_ros_mocap DESTINATION $ENV{HOME}/.gz/sim/plugins)
+install(TARGETS mocap_gz_ros DESTINATION $ENV{HOME}/.gz/sim/plugins)
 
-ament_export_libraries(gz_ros_mocap)
+ament_export_libraries(mocap_gz_ros)
 ament_export_dependencies(gz-cmake3 gz-plugin2 gz-sim8 geometry_msgs mocap_interfaces mocap4r2_control rclcpp)
 
 ament_package()
