@@ -23,6 +23,8 @@ include_directories(include)
 
 add_library(gz_ros_mocap SHARED src/gz_ros_mocap.cpp)
 
+set_target_properties(gz_ros_mocap PROPERTIES OUTPUT_NAME gz-ros-mocap SUFFIX "" PREFIX "")
+
 ament_target_dependencies(gz_ros_mocap
   rclcpp
   geometry_msgs
@@ -40,7 +42,7 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}/
 )
 
-install(TARGETS gz_ros_mocap DESTINATION lib/gz_ros_mocap)
+install(TARGETS gz_ros_mocap DESTINATION $ENV{HOME}/.gz/sim/plugins)
 
 ament_export_libraries(gz_ros_mocap)
 ament_export_dependencies(gz-cmake3 gz-plugin2 gz-sim8 geometry_msgs mocap_interfaces mocap4r2_control rclcpp)
