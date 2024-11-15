@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GZ_PLUGINS__GZ_ROS_MOCAP_HPP_
-#define GZ_PLUGINS__GZ_ROS_MOCAP_HPP_
+#ifndef GZ_PLUGINS__MOCAP_GZ_ROS_HPP_
+#define GZ_PLUGINS__MOCAP_GZ_ROS_HPP_
 
 #include <gz/sim/System.hh>
 #include <gz/transport/Node.hh>
@@ -42,16 +42,16 @@ inline namespace GZ_SIM_VERSION_NAMESPACE
 {
 namespace systems
 {
-class GzRosMocapPrivate;
+class MocapGzRosPrivate;
 
-class GzRosMocap
+class MocapGzRos
   : public gz::sim::System,
   public gz::sim::ISystemConfigure,
   public gz::sim::ISystemPostUpdate
 {
 public:
-  GzRosMocap();
-  ~GzRosMocap() override = default;
+  MocapGzRos();
+  ~MocapGzRos() override = default;
   void Configure(
     const gz::sim::Entity & _entity,
     const std::shared_ptr<const sdf::Element> & _sdf,
@@ -63,11 +63,11 @@ public:
     const gz::sim::v8::EntityComponentManager & _ecm) override;
 
 private:
-  std::unique_ptr<GzRosMocapPrivate> impl_;
+  std::unique_ptr<MocapGzRosPrivate> impl_;
 };
 } // namespace systems
 } // inline namespace GZ_SIM_VERSION_NAMESPACE
 } // namespace sim
 } // namespace gz
 
-#endif  // GZ_PLUGINS__GZ_ROS_MOCAP_HPP_
+#endif  // GZ_PLUGINS__MOCAP_GZ_ROS_HPP_

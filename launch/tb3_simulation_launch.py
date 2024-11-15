@@ -24,7 +24,7 @@ def generate_launch_description():
 
     bringup_dir = get_package_share_directory('nav2_bringup')
     launch_dir = os.path.join(bringup_dir, 'launch')
-    mocap_dir = get_package_share_directory('gz_mocap4r2_plugin')
+    mocap_dir = get_package_share_directory('mocap4r2_gz_plugin')
 
     declare_robot_sdf_cmd = DeclareLaunchArgument(
         'robot_sdf',
