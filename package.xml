@@ -12,9 +12,9 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   
-  <depend>gz-cmake3</depend>
-  <depend>gz-plugin2</depend>
-  <depend>gz-sim8</depend>
+  <depend>gz-cmake-vendor</depend>
+  <depend>gz-plugin-vendor</depend>
+  <depend>gz-sim-vendor</depend>
   <depend>rclcpp</depend>
   <depend>geometry_msgs</depend>
   <depend>mocap_interfaces</depend>

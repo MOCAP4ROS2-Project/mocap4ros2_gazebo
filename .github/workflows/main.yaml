@@ -16,10 +16,6 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
-      - name: Install libgz dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y libgz-rendering8-dev libgz-sensors8-dev libgz-plugin2-dev libgz-sim8-dev
       - name: Setup ROS 2
         uses: ros-tooling/setup-ros@0.7.9
         with:
