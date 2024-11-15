@@ -489,7 +489,7 @@
       </plugin>
 
       <plugin
-        filename="libgz_ros_mocap.so"
+        filename="gz-ros-mocap"
         name="gz::sim::systems::GzRosMocap">
         <rigid_link>base_footprint</rigid_link>
     </plugin>
