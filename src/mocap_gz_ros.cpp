@@ -1,4 +1,4 @@
-// Copyright 2022 Intelligent Robotics Lab
+// Copyright 2024 Intelligent Robotics Lab
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,39 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Author: Jose Miguel Guerrero Hernandez <josemiguel.guerrero@urjc.es>
-// Modified by: Juan Carlos Manzanares Serrano <juancarlos.serrano@urjc.es>
-
-
-#include <memory>
-#include <string>
-#include <utility>
-
-#include <gazebo/physics/Model.hh>
-#include <gazebo_plugins/gazebo_ros_mocap.hpp>
-#include <gazebo_ros/node.hpp>
-
-#include "mocap_interfaces/msg/marker_array.hpp"
-#include "mocap_interfaces/msg/rigid_body_array.hpp"
-#include "mocap_interfaces/srv/create_rigid_body.hpp"
-#include "lifecycle_msgs/msg/state.hpp"
-
-#include "rclcpp/rclcpp.hpp"
+#include "mocap4r2_gz_plugin/mocap_gz_ros.hpp"
 #include "mocap4r2_control/ControlledLifecycleNode.hpp"
 
-namespace gazebo
-{
-
-GZ_REGISTER_MODEL_PLUGIN(GazeboRosMocap)
+using namespace gz;
+using namespace sim;
+using namespace systems;
 
 using CallbackReturnT =
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
-/// Class to hold private data members (PIMPL pattern)
-class GazeboRosMocapPrivate : public mocap4r2_control::ControlledLifecycleNode
+class gz::sim::systems::MocapGzRosPrivate : public mocap4r2_control::ControlledLifecycleNode
 {
 public:
-  GazeboRosMocapPrivate();
+  MocapGzRosPrivate();
+  ~MocapGzRosPrivate() = default;
 
   CallbackReturnT on_configure(const rclcpp_lifecycle::State & state) override;
   CallbackReturnT on_activate(const rclcpp_lifecycle::State & state) override;
@@ -58,18 +40,15 @@ public:
     const std::shared_ptr<mocap_interfaces::srv::CreateRigidBody::Request> request,
     const std::shared_ptr<mocap_interfaces::srv::CreateRigidBody::Response> response);
 
-  /// Connection to world update event. Callback is called while this is alive.
-  gazebo::event::ConnectionPtr update_connection_;
-  physics::WorldPtr world_;
-  std::vector<physics::LinkPtr> rigid_links_;
-  std::vector<physics::LinkPtr> marker_links_;
-  std::vector<std::string> rigid_link_names_;
-  std::vector<std::string> marker_link_names_;
+  std::vector<Entity> rigid_links_;
+  std::vector<Entity> marker_links_;
+  std::vector<std::string> rigid_links_names_;
+  std::vector<std::string> marker_links_names_;
   std::map<int, mocap_interfaces::msg::Marker> markers_;
   std::map<std::string, std::vector<int>> rigid_body_markers_;
   std::map<std::string, std::string> rigid_body_orientation;
+  Model model{kNullEntity};
 
-  /// ROS communication.
   rclcpp_lifecycle::LifecyclePublisher<mocap_interfaces::msg::MarkerArray>::SharedPtr
     mocap_markers_pub_;
   rclcpp_lifecycle::LifecyclePublisher<mocap_interfaces::msg::RigidBodyArray>::SharedPtr
@@ -79,15 +58,14 @@ public:
   int seq_{0};
 };
 
-GazeboRosMocapPrivate::GazeboRosMocapPrivate()
-: ControlledLifecycleNode("gazebo_control")
+MocapGzRosPrivate::MocapGzRosPrivate()
+: ControlledLifecycleNode("gz_control")
 {
   trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE);
 }
 
-
 CallbackReturnT
-GazeboRosMocapPrivate::on_configure(const rclcpp_lifecycle::State & state)
+MocapGzRosPrivate::on_configure(const rclcpp_lifecycle::State & state)
 {
   mocap_markers_pub_ = create_publisher<mocap_interfaces::msg::MarkerArray>(
     "markers", rclcpp::QoS(1000));
@@ -96,14 +74,14 @@ GazeboRosMocapPrivate::on_configure(const rclcpp_lifecycle::State & state)
   mocap_create_rigid_body_service_ = create_service<mocap_interfaces::srv::CreateRigidBody>(
     "create_rigid_body",
     std::bind(
-      &GazeboRosMocapPrivate::handleCreateRigidBody, this, std::placeholders::_1,
+      &MocapGzRosPrivate::handleCreateRigidBody, this, std::placeholders::_1,
       std::placeholders::_2, std::placeholders::_3));
 
   return ControlledLifecycleNode::on_configure(state);
 }
 
 CallbackReturnT
-GazeboRosMocapPrivate::on_activate(const rclcpp_lifecycle::State & state)
+MocapGzRosPrivate::on_activate(const rclcpp_lifecycle::State & state)
 {
   (void)state;
 
@@ -114,7 +92,7 @@ GazeboRosMocapPrivate::on_activate(const rclcpp_lifecycle::State & state)
 }
 
 CallbackReturnT
-GazeboRosMocapPrivate::on_deactivate(const rclcpp_lifecycle::State & state)
+MocapGzRosPrivate::on_deactivate(const rclcpp_lifecycle::State & state)
 {
   (void)state;
 
@@ -125,18 +103,18 @@ GazeboRosMocapPrivate::on_deactivate(const rclcpp_lifecycle::State & state)
 }
 
 void
-GazeboRosMocapPrivate::control_start(const mocap4r2_control_msgs::msg::Control::SharedPtr msg)
+MocapGzRosPrivate::control_start(const mocap4r2_control_msgs::msg::Control::SharedPtr msg)
 {
   RCLCPP_INFO(get_logger(), "Starting mocap gazebo");
 }
 
 void
-GazeboRosMocapPrivate::control_stop(const mocap4r2_control_msgs::msg::Control::SharedPtr msg)
+MocapGzRosPrivate::control_stop(const mocap4r2_control_msgs::msg::Control::SharedPtr msg)
 {
   RCLCPP_INFO(get_logger(), "Stopping mocap gazebo");
 }
 
-void GazeboRosMocapPrivate::handleCreateRigidBody(
+void MocapGzRosPrivate::handleCreateRigidBody(
   const std::shared_ptr<rmw_request_id_t> request_header,
   const std::shared_ptr<mocap_interfaces::srv::CreateRigidBody::Request> request,
   const std::shared_ptr<mocap_interfaces::srv::CreateRigidBody::Response> response)
@@ -150,119 +128,58 @@ void GazeboRosMocapPrivate::handleCreateRigidBody(
   response->success = true;
 }
 
-GazeboRosMocap::GazeboRosMocap()
-: impl_(std::make_unique<GazeboRosMocapPrivate>())
+MocapGzRos::MocapGzRos()
 {
+  rclcpp::init(0, nullptr);
+  impl_ = std::make_unique<MocapGzRosPrivate>();
 }
 
-GazeboRosMocap::~GazeboRosMocap()
+void MocapGzRos::Configure(
+  const gz::sim::Entity & _entity,
+  const std::shared_ptr<const sdf::Element> & _sdf,
+  gz::sim::EntityComponentManager & _ecm,
+  gz::sim::EventManager & _eventMgr)
 {
-  impl_->update_connection_.reset();
-}
+  impl_->model = Model(_entity);
 
-physics::LinkPtr find_link(gazebo::physics::Link_V & links, const std::string & name)
-{
-  if (links.empty()) {
-    return nullptr;
-  }
+  auto sdf_element = _sdf->FindElement("rigid_link");
 
-  for (const auto & link : links) {
-    std::cerr << "Link: " << link->GetName() << std::endl;
-    if (link->GetName() == name) {
-      return link;
+  while (sdf_element) {
+    if (!sdf_element->Get<std::string>().empty()) {
+      impl_->rigid_links_names_.push_back(sdf_element->Get<std::string>());
     } else {
-      auto child_links = link->GetChildJointsLinks();
-      std::cerr << "And has " << child_links.size() << "childs:";
-      for (const auto & child_link : child_links) {
-        std::cerr << " " << child_link->GetName();
-      }
-      std::cerr << std::endl;
-
-      auto found_link = find_link(child_links, name);
-      if (found_link != nullptr) {
-        return found_link;
-      }
+      gzerr << "Empty rigid_link name" << std::endl;
     }
+
+    sdf_element = sdf_element->GetNextElement("rigid_link");
   }
 
-  return nullptr;
-}
+  sdf_element = _sdf->FindElement("marker_link");
 
-void GazeboRosMocap::Load(physics::ModelPtr _parent, sdf::ElementPtr sdf)
-{
-  impl_->update_connection_ = gazebo::event::Events::ConnectWorldUpdateBegin(
-    std::bind(&GazeboRosMocap::OnUpdate, this));
-
-  auto logger = impl_->get_logger();
-
-  if (sdf->HasElement("rigid_link")) {
-    auto link_name_element = sdf->GetElement("rigid_link");
-    while (link_name_element) {
-      impl_->rigid_link_names_.push_back(link_name_element->Get<std::string>());
-      link_name_element = link_name_element->GetNextElement("rigid_link");
+  while (sdf_element) {
+    if (!sdf_element->Get<std::string>().empty()) {
+      impl_->marker_links_names_.push_back(sdf_element->Get<std::string>());
+    } else {
+      gzerr << "Empty marker_link name" << std::endl;
     }
+
+    sdf_element = sdf_element->GetNextElement("marker_link");
   }
 
-  if (sdf->HasElement("marker_link")) {
-    auto link_name_element = sdf->GetElement("marker_link");
-    while (link_name_element) {
-      impl_->marker_link_names_.push_back(link_name_element->Get<std::string>());
-      link_name_element = link_name_element->GetNextElement("marker_link");
-    }
+  for (const auto & link_name : impl_->rigid_links_names_) {
+    auto link = impl_->model.LinkByName(_ecm, link_name);
+    impl_->rigid_links_.push_back(link);
   }
 
-  impl_->world_ = _parent->GetWorld();
-
-  for (const auto & link_name : impl_->rigid_link_names_) {
-    for (const auto & model : impl_->world_->Models()) {
-      auto links = model->GetLinks();
-      auto link = find_link(links, link_name);
-
-      if (link != nullptr) {
-        impl_->rigid_links_.push_back(link);
-        RCLCPP_INFO(logger, "Plugin MOCAP loaded for rigid link [%s]", link_name.c_str());
-        break;
-      }
-    }
-  }
-
-  for (const auto & link_name : impl_->marker_link_names_) {
-    for (const auto & model : impl_->world_->Models()) {
-      auto links = model->GetLinks();
-      auto link = find_link(links, link_name);
-
-      if (link != nullptr) {
-        impl_->marker_links_.push_back(link);
-        RCLCPP_INFO(logger, "Plugin MOCAP loaded for marker link [%s]", link_name.c_str());
-        break;
-      }
-    }
-  }
-
-  for (const auto & link_name : impl_->rigid_link_names_) {
-    if (std::find_if(
-        impl_->rigid_links_.begin(), impl_->rigid_links_.end(),
-        [&](const physics::LinkPtr & link) {
-          return link->GetName() == link_name;
-        }) == impl_->rigid_links_.end())
-    {
-      RCLCPP_ERROR(logger, "No rigid link [%s] found for Plugin MOCAP", link_name.c_str());
-    }
-  }
-
-  for (const auto & link_name : impl_->marker_link_names_) {
-    if (std::find_if(
-        impl_->marker_links_.begin(), impl_->marker_links_.end(),
-        [&](const physics::LinkPtr & link) {
-          return link->GetName() == link_name;
-        }) == impl_->marker_links_.end())
-    {
-      RCLCPP_ERROR(logger, "No marker link [%s] found for Plugin MOCAP", link_name.c_str());
-    }
+  for (const auto & link_name : impl_->marker_links_names_) {
+    auto link = impl_->model.LinkByName(_ecm, link_name);
+    impl_->marker_links_.push_back(link);
   }
 }
 
-void GazeboRosMocap::OnUpdate()
+void MocapGzRos::PostUpdate(
+  const gz::sim::v8::UpdateInfo & _info,
+  const gz::sim::v8::EntityComponentManager & _ecm)
 {
   rclcpp::spin_some(impl_->get_node_base_interface());
 
@@ -283,8 +200,9 @@ void GazeboRosMocap::OnUpdate()
   impl_->seq_;
   int index = 1;
 
-  for (const auto & link : impl_->rigid_links_) {
-    ignition::math::v6::Pose3d pose = link->WorldPose();
+  for (int i = 0; i < impl_->rigid_links_.size(); i++) {
+    auto link = impl_->rigid_links_[i];
+    math::Pose3d pose = worldPose(link, _ecm);
 
     auto & pos = pose.Pos();
     auto & rot = pose.Rot();
@@ -315,7 +233,7 @@ void GazeboRosMocap::OnUpdate()
 
     mocap_interfaces::msg::RigidBody rb;
     rb.header.stamp = impl_->now();
-    rb.rigid_body_name = "rigid_body_" + link->GetName();
+    rb.rigid_body_name = impl_->rigid_links_names_[i];
     rb.pose.position.x = pos.X();
     rb.pose.position.y = pos.Y();
     rb.pose.position.z = pos.Z();
@@ -337,7 +255,7 @@ void GazeboRosMocap::OnUpdate()
   }
 
   for (const auto & link : impl_->marker_links_) {
-    ignition::math::v6::Pose3d pose = link->WorldPose();
+    math::Pose3d pose = worldPose(link, _ecm);
 
     auto & pos = pose.Pos();
 
@@ -376,20 +294,16 @@ void GazeboRosMocap::OnUpdate()
 
     rb.pose.position = centroid;
 
-    for (const auto & model : impl_->world_->Models()) {
-      auto links = model->GetLinks();
-      auto link = find_link(links, impl_->rigid_body_orientation[rigid_body_name]);
-
-      if (link != nullptr) {
-        ignition::math::v6::Pose3d pose = link->WorldPose();
-        auto & rot = pose.Rot();
-
-        rb.pose.orientation.x = rot.X();
-        rb.pose.orientation.y = rot.Y();
-        rb.pose.orientation.z = rot.Z();
-        rb.pose.orientation.w = rot.W();
-        break;
-      }
+    if (impl_->rigid_body_orientation.find(rigid_body_name) !=
+      impl_->rigid_body_orientation.end())
+    {
+      auto link = impl_->model.LinkByName(_ecm, impl_->rigid_body_orientation[rigid_body_name]);
+      math::Pose3d pose = worldPose(link, _ecm);
+      auto & rot = pose.Rot();
+      rb.pose.orientation.x = rot.X();
+      rb.pose.orientation.y = rot.Y();
+      rb.pose.orientation.z = rot.Z();
+      rb.pose.orientation.w = rot.W();
     }
 
     rbs.rigid_bodies.push_back(rb);
@@ -404,4 +318,9 @@ void GazeboRosMocap::OnUpdate()
   }
 }
 
-}  // namespace gazebo
+GZ_ADD_PLUGIN(MocapGzRos, gz::sim::System,
+  MocapGzRos::ISystemConfigure,
+  MocapGzRos::ISystemPostUpdate
+)
+
+GZ_ADD_PLUGIN_ALIAS(MocapGzRos, "gz::sim::systems::MocapGzRos")
