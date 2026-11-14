@@ -1,0 +1,63 @@
+<?xml version="1.0" ?>
+<!-- A motion capture room with a box moving in circles, tracked by MOCAP4ROS2. -->
+<sdf version="1.9">
+  <world name="mocap_room">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+
+    <!-- The mocap system: output "ros" (MOCAP4ROS2 topics) or "natnet" (simulated Motive). -->
+    <plugin filename="mocap4r2_gz_plugin" name="mocap4r2_gz_plugin::MocapSystem">
+      <output>ros</output>
+      <rate>120</rate>
+      <noise>0.0003</noise>
+      <autostart>activate</autostart>
+      <frame_id>mocap</frame_id>
+      <rigid_body name="box" link="box::link">
+        <offset>0 0 0.15 0 0 0</offset>
+        <marker name="front">0.12 0 0.02</marker>
+        <marker name="left">-0.06 0.08 0.02</marker>
+        <marker name="right">-0.06 -0.06 0.04</marker>
+        <marker name="top">0 0 0.08</marker>
+      </rigid_body>
+    </plugin>
+
+    <light type="directional" name="sun">
+      <pose>0 0 10 0 0 0</pose>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>20 20</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>20 20</size></plane></geometry>
+        </visual>
+      </link>
+    </model>
+
+    <model name="box">
+      <pose>1 0 0.15 0 0 0</pose>
+      <link name="link">
+        <inertial><mass>1.0</mass></inertial>
+        <collision name="collision">
+          <geometry><box><size>0.3 0.2 0.3</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.3 0.2 0.3</size></box></geometry>
+          <material><diffuse>0.2 0.5 0.9 1</diffuse></material>
+        </visual>
+      </link>
+      <plugin filename="gz-sim-velocity-control-system" name="gz::sim::systems::VelocityControl">
+        <initial_linear>0.4 0 0</initial_linear>
+        <initial_angular>0 0 0.4</initial_angular>
+      </plugin>
+    </model>
+  </world>
+</sdf>

@@ -1,0 +1,7 @@
+# The marker plate of the demo robot is at (-0.05, 0.02, 0.32) yawed 0.3 rad in base_link:
+# body_to_robot is the inverse (base_link in the body frame).
+robot_gt:
+  ros__parameters:
+    rigid_body: robot
+    robot_frame: base_link
+    body_to_robot: [0.041856, -0.033883, -0.32, 0.0, 0.0, -0.3]

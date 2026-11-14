@@ -1,0 +1,161 @@
+<?xml version="1.0" ?>
+<!-- Demo: a walking mannequin tracked as a skeleton (and its head as a rigid body)
+     by the simulated mocap room. -->
+<sdf version="1.9">
+  <world name="human_motion">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+
+    <plugin filename="mocap4r2_gz_plugin" name="mocap4r2_gz_plugin::MocapSystem">
+      <output>ros</output>
+      <rate>100</rate>
+      <noise>0.0005</noise>
+      <autostart>activate</autostart>
+      <frame_id>mocap</frame_id>
+      <rigid_body name="head" link="walker::head">
+        <marker name="front">0.11 0 0.02</marker>
+        <marker name="left">0 0.1 0.04</marker>
+        <marker name="right">0 -0.1 0.04</marker>
+        <marker name="top">-0.02 0 0.11</marker>
+      </rigid_body>
+      <skeleton name="walker">
+        <segment name="pelvis" link="walker::pelvis"/>
+        <segment name="torso" link="walker::torso" parent="pelvis"/>
+        <segment name="head" link="walker::head" parent="torso"/>
+        <segment name="thigh_l" link="walker::thigh_l" parent="pelvis"/>
+        <segment name="shank_l" link="walker::shank_l" parent="thigh_l"/>
+        <segment name="upper_arm_l" link="walker::upper_arm_l" parent="torso"/>
+        <segment name="forearm_l" link="walker::forearm_l" parent="upper_arm_l"/>
+        <segment name="thigh_r" link="walker::thigh_r" parent="pelvis"/>
+        <segment name="shank_r" link="walker::shank_r" parent="thigh_r"/>
+        <segment name="upper_arm_r" link="walker::upper_arm_r" parent="torso"/>
+        <segment name="forearm_r" link="walker::forearm_r" parent="upper_arm_r"/>
+      </skeleton>
+    </plugin>
+
+    <light type="directional" name="sun">
+      <pose>0 0 10 0 0 0</pose>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+    <model name="floor">
+      <static>true</static>
+      <link name="link">
+        <visual name="v">
+          <geometry><plane><normal>0 0 1</normal><size>10 10</size></plane></geometry>
+          <material><diffuse>0.8 0.8 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="walker">
+      <pose>1.5 0 0.95 0 0 1.5708</pose>
+      <link name="pelvis">
+        <pose>0 0 0 0 0 0</pose>
+        <gravity>false</gravity>
+        <inertial><mass>1.0</mass><inertia><ixx>0.01</ixx><iyy>0.01</iyy><izz>0.01</izz></inertia></inertial>
+        <visual name="v"><geometry><box><size>0.2 0.32 0.15</size></box></geometry><material><diffuse>0.2 0.2 0.5 1</diffuse></material></visual>
+      </link>
+      <link name="torso">
+        <pose>0 0 0.32 0 0 0</pose>
+        <gravity>false</gravity>
+        <inertial><mass>1.0</mass><inertia><ixx>0.01</ixx><iyy>0.01</iyy><izz>0.01</izz></inertia></inertial>
+        <visual name="v"><geometry><box><size>0.2 0.36 0.45</size></box></geometry><material><diffuse>0.8 0.25 0.2 1</diffuse></material></visual>
+      </link>
+      <link name="head">
+        <pose>0 0 0.68 0 0 0</pose>
+        <gravity>false</gravity>
+        <inertial><mass>1.0</mass><inertia><ixx>0.01</ixx><iyy>0.01</iyy><izz>0.01</izz></inertia></inertial>
+        <visual name="v"><geometry><sphere><radius>0.11</radius></sphere></geometry><material><diffuse>0.85 0.6 0.45 1</diffuse></material></visual>
+      </link>
+      <link name="thigh_l">
+        <pose>0 0.1 -0.25 0 0 0</pose>
+        <gravity>false</gravity>
+        <inertial><mass>1.0</mass><inertia><ixx>0.01</ixx><iyy>0.01</iyy><izz>0.01</izz></inertia></inertial>
+        <visual name="v"><geometry><cylinder><radius>0.065</radius><length>0.42</length></cylinder></geometry><material><diffuse>0.2 0.2 0.5 1</diffuse></material></visual>
+      </link>
+      <link name="shank_l">
+        <pose>0 0.1 -0.67 0 0 0</pose>
+        <gravity>false</gravity>
+        <inertial><mass>1.0</mass><inertia><ixx>0.01</ixx><iyy>0.01</iyy><izz>0.01</izz></inertia></inertial>
+        <visual name="v"><geometry><cylinder><radius>0.05</radius><length>0.42</length></cylinder></geometry><material><diffuse>0.85 0.6 0.45 1</diffuse></material></visual>
+      </link>
+      <link name="upper_arm_l">
+        <pose>0 0.24 0.38 0 0 0</pose>
+        <gravity>false</gravity>
+        <inertial><mass>1.0</mass><inertia><ixx>0.01</ixx><iyy>0.01</iyy><izz>0.01</izz></inertia></inertial>
+        <visual name="v"><geometry><cylinder><radius>0.045</radius><length>0.3</length></cylinder></geometry><material><diffuse>0.8 0.25 0.2 1</diffuse></material></visual>
+      </link>
+      <link name="forearm_l">
+        <pose>0 0.24 0.09 0 0 0</pose>
+        <gravity>false</gravity>
+        <inertial><mass>1.0</mass><inertia><ixx>0.01</ixx><iyy>0.01</iyy><izz>0.01</izz></inertia></inertial>
+        <visual name="v"><geometry><cylinder><radius>0.04</radius><length>0.28</length></cylinder></geometry><material><diffuse>0.85 0.6 0.45 1</diffuse></material></visual>
+      </link>
+      <link name="thigh_r">
+        <pose>0 -0.1 -0.25 0 0 0</pose>
+        <gravity>false</gravity>
+        <inertial><mass>1.0</mass><inertia><ixx>0.01</ixx><iyy>0.01</iyy><izz>0.01</izz></inertia></inertial>
+        <visual name="v"><geometry><cylinder><radius>0.065</radius><length>0.42</length></cylinder></geometry><material><diffuse>0.2 0.2 0.5 1</diffuse></material></visual>
+      </link>
+      <link name="shank_r">
+        <pose>0 -0.1 -0.67 0 0 0</pose>
+        <gravity>false</gravity>
+        <inertial><mass>1.0</mass><inertia><ixx>0.01</ixx><iyy>0.01</iyy><izz>0.01</izz></inertia></inertial>
+        <visual name="v"><geometry><cylinder><radius>0.05</radius><length>0.42</length></cylinder></geometry><material><diffuse>0.85 0.6 0.45 1</diffuse></material></visual>
+      </link>
+      <link name="upper_arm_r">
+        <pose>0 -0.24 0.38 0 0 0</pose>
+        <gravity>false</gravity>
+        <inertial><mass>1.0</mass><inertia><ixx>0.01</ixx><iyy>0.01</iyy><izz>0.01</izz></inertia></inertial>
+        <visual name="v"><geometry><cylinder><radius>0.045</radius><length>0.3</length></cylinder></geometry><material><diffuse>0.8 0.25 0.2 1</diffuse></material></visual>
+      </link>
+      <link name="forearm_r">
+        <pose>0 -0.24 0.09 0 0 0</pose>
+        <gravity>false</gravity>
+        <inertial><mass>1.0</mass><inertia><ixx>0.01</ixx><iyy>0.01</iyy><izz>0.01</izz></inertia></inertial>
+        <visual name="v"><geometry><cylinder><radius>0.04</radius><length>0.28</length></cylinder></geometry><material><diffuse>0.85 0.6 0.45 1</diffuse></material></visual>
+      </link>
+      <joint name="spine" type="fixed">
+        <parent>pelvis</parent><child>torso</child><pose>0 0 0 0 0 0</pose>
+      </joint>
+      <joint name="neck" type="fixed">
+        <parent>torso</parent><child>head</child><pose>0 0 0 0 0 0</pose>
+      </joint>
+      <joint name="hip_l" type="revolute">
+        <parent>pelvis</parent><child>thigh_l</child><pose>0 0 0.21 0 0 0</pose><axis><xyz>0 1 0</xyz></axis>
+      </joint>
+      <joint name="knee_l" type="revolute">
+        <parent>thigh_l</parent><child>shank_l</child><pose>0 0 0.21 0 0 0</pose><axis><xyz>0 1 0</xyz></axis>
+      </joint>
+      <joint name="shoulder_l" type="revolute">
+        <parent>torso</parent><child>upper_arm_l</child><pose>0 0 0.15 0 0 0</pose><axis><xyz>0 1 0</xyz></axis>
+      </joint>
+      <joint name="elbow_l" type="revolute">
+        <parent>upper_arm_l</parent><child>forearm_l</child><pose>0 0 0.14 0 0 0</pose><axis><xyz>0 1 0</xyz></axis>
+      </joint>
+      <joint name="hip_r" type="revolute">
+        <parent>pelvis</parent><child>thigh_r</child><pose>0 0 0.21 0 0 0</pose><axis><xyz>0 1 0</xyz></axis>
+      </joint>
+      <joint name="knee_r" type="revolute">
+        <parent>thigh_r</parent><child>shank_r</child><pose>0 0 0.21 0 0 0</pose><axis><xyz>0 1 0</xyz></axis>
+      </joint>
+      <joint name="shoulder_r" type="revolute">
+        <parent>torso</parent><child>upper_arm_r</child><pose>0 0 0.15 0 0 0</pose><axis><xyz>0 1 0</xyz></axis>
+      </joint>
+      <joint name="elbow_r" type="revolute">
+        <parent>upper_arm_r</parent><child>forearm_r</child><pose>0 0 0.14 0 0 0</pose><axis><xyz>0 1 0</xyz></axis>
+      </joint>
+      <plugin filename="mocap4r2_gz_gait_animator" name="mocap4r2_gz_plugin::GaitAnimator">
+        <frequency>0.9</frequency>
+        <radius>1.5</radius>
+        <speed>0.6</speed>
+        <height>0.95</height>
+      </plugin>
+    </model>
+  </world>
+</sdf>

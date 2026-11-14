@@ -1,13 +1,13 @@
 repositories:
-  mocap_interfaces:
+  mocap4r2_msgs:
     type: git
-    url: https://github.com/MOCAP4ROS2-Project/mocap_interfaces.git
-    version: humble
+    url: https://github.com/MOCAP4ROS2-Project/mocap4r2_msgs.git
+    version: rolling
   mocap4r2:
     type: git
     url: https://github.com/MOCAP4ROS2-Project/mocap4r2.git
-    version: rep-mocap
-  navigation2:
+    version: rolling
+  mocap4ros2_optitrack:
     type: git
-    url: https://github.com/ros-navigation/navigation2.git
-    version: main
+    url: https://github.com/MOCAP4ROS2-Project/mocap4ros2_optitrack.git
+    version: rolling

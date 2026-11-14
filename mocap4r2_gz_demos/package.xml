@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>mocap4r2_gz_demos</name>
+  <version>2.0.0</version>
+  <description>Gazebo demos of MOCAP4ROS2: robot ground truth and human motion in a simulated mocap room, streamed as MOCAP4ROS2 or as OptiTrack Motive</description>
+  <maintainer email="fmrico@gmail.com">Francisco Martín Rico</maintainer>
+  <license>Apache-2.0</license>
+  <url type="website">https://mocap4ros2-project.github.io</url>
+  <url type="repository">https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo</url>
+  <author email="fmrico@gmail.com">Francisco Martín Rico</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>mocap4r2_gz_plugin</exec_depend>
+  <exec_depend>mocap4r2_marker_viz</exec_depend>
+  <exec_depend>mocap4r2_motion_tools</exec_depend>
+  <exec_depend>mocap4r2_optitrack_driver</exec_depend>
+  <exec_depend>mocap4r2_robot_gt</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
