@@ -1,6 +1,6 @@
 # MOCAP4ROS2 for Gazebo
 
-[![CI](https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/actions/workflows/ci.yaml/badge.svg?branch=rolling)](https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/actions/workflows/ci.yaml)
+[![rolling](https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/actions/workflows/rolling.yaml/badge.svg?branch=rolling)](https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/actions/workflows/rolling.yaml) [![lyrical](https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/actions/workflows/lyrical.yaml/badge.svg?branch=rolling)](https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/actions/workflows/lyrical.yaml) [![kilted](https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/actions/workflows/kilted.yaml/badge.svg?branch=rolling)](https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/actions/workflows/kilted.yaml) [![jazzy](https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/actions/workflows/jazzy.yaml/badge.svg?branch=rolling)](https://github.com/MOCAP4ROS2-Project/mocap4ros2_gazebo/actions/workflows/jazzy.yaml)
 
 * `mocap4r2_gz_plugin`: a simulated mocap room for Gazebo (Jazzy and newer). It streams
   markers, rigid bodies and skeletons of the links you choose as a MOCAP4ROS2 system, or
