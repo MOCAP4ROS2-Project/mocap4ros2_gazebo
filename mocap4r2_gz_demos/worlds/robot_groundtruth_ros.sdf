@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+<!-- Demo: a robot with a marker body driving in a mocap room. The mocap system is
+     the mocap4r2_gz_plugin, as a MOCAP4ROS2 system (output ros) or as OptiTrack
+     Motive (output natnet), selected by the launch file. -->
+<sdf version="1.9">
+  <world name="robot_groundtruth">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+
+    <plugin filename="mocap4r2_gz_plugin" name="mocap4r2_gz_plugin::MocapSystem">
+      <output>ros</output>
+      <rate>120</rate>
+      <noise>0.0003</noise>
+      <autostart>activate</autostart>
+      <frame_id>mocap</frame_id>
+      <up_axis>y</up_axis>
+      <rigid_body name="robot" link="robot::base_link">
+        <offset>-0.05 0.02 0.32 0 0 0.3</offset>
+        <marker name="front">0.10 0 0.01</marker>
+        <marker name="left">-0.05 0.07 0.01</marker>
+        <marker name="right">-0.05 -0.05 0.03</marker>
+        <marker name="top">0 0 0.06</marker>
+      </rigid_body>
+    </plugin>
+
+    <light type="directional" name="sun">
+      <pose>0 0 10 0 0 0</pose>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+    <model name="floor">
+      <static>true</static>
+      <link name="link">
+        <collision name="c"><geometry><plane><normal>0 0 1</normal><size>10 10</size></plane></geometry></collision>
+        <visual name="v">
+          <geometry><plane><normal>0 0 1</normal><size>10 10</size></plane></geometry>
+          <material><diffuse>0.8 0.8 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- The robot: a body, a mast with the marker plate, driven at constant
+         twist (a circle of 1 m radius). -->
+    <model name="robot">
+      <pose>1 0 0.05 0 0 1.5708</pose>
+      <link name="base_link">
+        <inertial><mass>5.0</mass></inertial>
+        <collision name="c"><geometry><box><size>0.4 0.3 0.1</size></box></geometry></collision>
+        <visual name="body">
+          <geometry><box><size>0.4 0.3 0.1</size></box></geometry>
+          <material><diffuse>0.15 0.35 0.75 1</diffuse></material>
+        </visual>
+        <visual name="mast">
+          <pose>-0.05 0.02 0.18 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.26</length></cylinder></geometry>
+        </visual>
+        <visual name="plate">
+          <pose>-0.05 0.02 0.32 0 0 0.3</pose>
+          <geometry><box><size>0.2 0.16 0.01</size></box></geometry>
+          <material><diffuse>0.1 0.1 0.1 1</diffuse></material>
+        </visual>
+      </link>
+      <plugin filename="gz-sim-velocity-control-system" name="gz::sim::systems::VelocityControl">
+        <initial_linear>0.3 0 0</initial_linear>
+        <initial_angular>0 0 0.3</initial_angular>
+      </plugin>
+    </model>
+  </world>
+</sdf>

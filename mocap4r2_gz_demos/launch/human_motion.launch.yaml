@@ -1,0 +1,38 @@
+# Copyright 2026 Intelligent Robotics Lab
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Human motion demo: a walking mannequin tracked as a skeleton, joint angles, RViz.
+launch:
+  - arg: {name: rviz, default: "true"}
+  - include:
+      file: "$(find-pkg-share ros_gz_sim)/launch/gz_sim.launch.py"
+      arg:
+        - {name: gz_args, value: "-r $(find-pkg-share mocap4r2_gz_demos)/worlds/human_motion.sdf"}
+  - node: {pkg: ros_gz_bridge, exec: parameter_bridge, args: "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock", output: screen}
+  - node:
+      pkg: mocap4r2_motion_tools
+      exec: skeleton_publisher
+      output: screen
+      param: [{name: use_sim_time, value: true}]
+  - node:
+      pkg: mocap4r2_marker_viz
+      exec: marker_viz
+      output: screen
+      param: [{name: use_sim_time, value: true}]
+  - node:
+      if: $(var rviz)
+      pkg: rviz2
+      exec: rviz2
+      args: -d $(find-pkg-share mocap4r2_gz_demos)/rviz/demo.rviz
+      param: [{name: use_sim_time, value: true}]

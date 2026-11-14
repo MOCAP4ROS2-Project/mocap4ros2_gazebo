@@ -8,8 +8,8 @@
 * `mocap4r2_gz_demos`: robot ground truth and human motion demos.
 
 ```bash
-ros2 launch mocap4r2_gz_demos robot_groundtruth.launch.py system:=optitrack
-ros2 launch mocap4r2_gz_demos human_motion.launch.py
+ros2 launch mocap4r2_gz_demos robot_groundtruth.launch.yaml system:=optitrack
+ros2 launch mocap4r2_gz_demos human_motion.launch.yaml
 ```
 
 Documentation: https://mocap4ros2-project.github.io/latest/systems/gazebo.html

@@ -1,0 +1,58 @@
+# Copyright 2026 Intelligent Robotics Lab
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Robot ground-truth demo: Gazebo as the mocap room, robot_gt, RViz.
+#   system:=ros        the Gazebo plugin is a MOCAP4ROS2 system
+#   system:=optitrack  the plugin plays OptiTrack Motive and the real OptiTrack driver
+#                      connects to it, as in the lab
+launch:
+  - arg: {name: system, default: ros, description: "ros or optitrack"}
+  - arg: {name: rviz, default: "true"}
+  - include:
+      file: "$(find-pkg-share ros_gz_sim)/launch/gz_sim.launch.py"
+      arg:
+        - {name: gz_args, value: "-r $(find-pkg-share mocap4r2_gz_demos)/worlds/robot_groundtruth_$(var system).sdf"}
+  - node: {pkg: ros_gz_bridge, exec: parameter_bridge, args: "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock", output: screen}
+  - node:
+      if: $(eval "'$(var system)' == 'optitrack'")
+      pkg: mocap4r2_optitrack_driver
+      exec: optitrack_driver
+      name: optitrack_driver
+      output: screen
+      param:
+        - {name: server_address, value: 127.0.0.1}
+        - {name: local_address, value: 127.0.0.1}
+        - {name: connection_type, value: unicast}
+        - {name: up_axis, value: "y"}
+        - {name: autostart, value: activate}
+        - {name: use_sim_time, value: true}
+  - node:
+      pkg: mocap4r2_robot_gt
+      exec: robot_gt
+      name: robot_gt
+      output: screen
+      param:
+        - {from: "$(find-pkg-share mocap4r2_gz_demos)/config/robot_gt.yaml"}
+        - {name: use_sim_time, value: true}
+  - node:
+      pkg: mocap4r2_marker_viz
+      exec: marker_viz
+      output: screen
+      param: [{name: use_sim_time, value: true}]
+  - node:
+      if: $(var rviz)
+      pkg: rviz2
+      exec: rviz2
+      args: -d $(find-pkg-share mocap4r2_gz_demos)/rviz/demo.rviz
+      param: [{name: use_sim_time, value: true}]

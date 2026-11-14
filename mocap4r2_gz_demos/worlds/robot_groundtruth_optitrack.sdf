@@ -13,10 +13,10 @@
     <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
 
     <plugin filename="mocap4r2_gz_plugin" name="mocap4r2_gz_plugin::MocapSystem">
-      <output>OUTPUT</output>
+      <output>natnet</output>
       <rate>120</rate>
       <noise>0.0003</noise>
-      <autostart>configure</autostart>
+      <autostart>activate</autostart>
       <frame_id>mocap</frame_id>
       <up_axis>y</up_axis>
       <rigid_body name="robot" link="robot::base_link">

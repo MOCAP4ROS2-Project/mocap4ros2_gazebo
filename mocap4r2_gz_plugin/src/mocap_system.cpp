@@ -79,6 +79,8 @@ protected:
     return CallbackReturn::SUCCESS;
   }
   double nominal_frame_rate() const override {return rate_;}
+  std::string server() const override {return "Gazebo simulation";}
+  bool connected() const override {return true;}
 
 private:
   double rate_;
