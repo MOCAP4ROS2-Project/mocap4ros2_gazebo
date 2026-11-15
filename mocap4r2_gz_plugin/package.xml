@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>mocap4r2_gz_plugin</name>
-  <version>2.0.0</version>
+  <version>2.0.1</version>
   <description>Gazebo plugin simulating a motion capture room: markers on links, streamed as a MOCAP4ROS2 system or as an OptiTrack Motive server</description>
   <maintainer email="fmrico@gmail.com">Francisco Martín Rico</maintainer>
   <license>Apache-2.0</license>
