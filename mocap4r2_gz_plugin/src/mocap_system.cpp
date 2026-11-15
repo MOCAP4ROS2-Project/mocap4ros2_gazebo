@@ -42,6 +42,8 @@
 #include "mocap4r2_gz_plugin/mocap_scene.hpp"
 #include "mocap4r2_gz_plugin/natnet_bridge.hpp"
 #include "mocap4r2_optitrack_driver/fake_natnet_server.hpp"
+#include "rcl/error_handling.h"
+#include "rcl/time.h"
 #include "rclcpp/rclcpp.hpp"
 
 namespace mocap4r2_gz_plugin
@@ -55,11 +57,26 @@ public:
   : MocapSystemNode(name, "gazebo", options), rate_(rate)
   {
     mocap4r2_control::declare_frame_publisher_parameters(*this);
+    // The node lives in the simulation: its clock is the simulation time, set per frame
+    auto clock = get_clock();
+    std::lock_guard<std::mutex> lock(clock->get_clock_mutex());
+    if (rcl_enable_ros_time_override(clock->get_clock_handle()) != RCL_RET_OK) {
+      RCLCPP_ERROR(get_logger(), "cannot follow the simulation time");
+    }
   }
 
   void publish(mocap4r2_control::MocapFrame && f)
   {
     std::lock_guard<std::mutex> lock(mutex_);
+    {
+      auto clock = get_clock();
+      std::lock_guard<std::mutex> clock_lock(clock->get_clock_mutex());
+      if (rcl_set_ros_time_override(
+          clock->get_clock_handle(), f.capture_time.nanoseconds()) != RCL_RET_OK)
+      {
+        rcl_reset_error();
+      }
+    }
     if (publisher_) {
       publisher_->publish(std::move(f));
     }

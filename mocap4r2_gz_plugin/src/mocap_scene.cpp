@@ -47,7 +47,8 @@ MocapScene::frame(uint64_t frame_number, const std::map<std::string, Pose3> & li
 {
   using mocap4r2_interfaces::msg::Marker;
   using mocap4r2_interfaces::msg::RigidBody;
-  std::normal_distribution<double> noise(0.0, config_.noise);
+  // std::normal_distribution requires stddev > 0; it is not sampled when noise is 0
+  std::normal_distribution<double> noise(0.0, config_.noise > 0.0 ? config_.noise : 1.0);
   std::uniform_real_distribution<double> unit(0.0, 1.0);
 
   mocap4r2_control::MocapFrame out;
